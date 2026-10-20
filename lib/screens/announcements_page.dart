@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import '../services/session.dart';
 import '../utils/formats.dart';
 import '../theme/app_theme.dart';
+import '../widgets/load_error_state.dart';
 import 'create_announcement_screen.dart';
 
 class AnnouncementsPage extends StatefulWidget {
@@ -15,6 +16,7 @@ class AnnouncementsPage extends StatefulWidget {
 class _AnnouncementsPageState extends State<AnnouncementsPage> {
   List<dynamic> announcements = [];
   bool isLoading = true;
+  String? loadError;
 
   @override
   void initState() {
@@ -23,7 +25,10 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
   }
 
   Future<void> loadAnnouncements() async {
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+      loadError = null;
+    });
 
     try {
       final data = await ApiService.getAnnouncements();
@@ -37,7 +42,10 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
     } catch (e) {
       if (!mounted) return;
 
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+        loadError = 'Could not load announcements. $e';
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load announcements: $e')),
@@ -75,10 +83,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Announcements',
-                          style: AppTextStyles.pageHeading,
-                        ),
+                        Text('Announcements', style: AppTextStyles.pageHeading),
                         SizedBox(height: 8),
                         Text(
                           'Latest updates from your events.',
@@ -112,20 +117,26 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.campaign_outlined, color: Colors.white, size: 30),
+                    Icon(
+                      Icons.campaign_outlined,
+                      color: Colors.white,
+                      size: 30,
+                    ),
                     SizedBox(width: 13),
                     Expanded(
                       child: Text(
                         'Stay in the loop',
                         style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 17,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 17,
                         ),
                       ),
                     ),
-                    Icon(Icons.notifications_active_outlined,
-                        color: Color(0xFFFFD58A)),
+                    Icon(
+                      Icons.notifications_active_outlined,
+                      color: Color(0xFFFFD58A),
+                    ),
                   ],
                 ),
               ),
@@ -138,6 +149,8 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                     child: CircularProgressIndicator(),
                   ),
                 )
+              else if (loadError != null)
+                LoadErrorState(message: loadError!, onRetry: loadAnnouncements)
               else if (announcements.isEmpty)
                 const Center(
                   child: Padding(

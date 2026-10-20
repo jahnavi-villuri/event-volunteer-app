@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/event_artwork.dart';
+import '../widgets/load_error_state.dart';
 import 'create_task_screen.dart';
 import 'volunteer_requests_screen.dart';
 
@@ -16,6 +17,7 @@ class ManageEventsScreen extends StatefulWidget {
 class _ManageEventsScreenState extends State<ManageEventsScreen> {
   List<dynamic> events = [];
   bool isLoading = true;
+  String? loadError;
 
   @override
   void initState() {
@@ -24,7 +26,10 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
   }
 
   Future<void> loadEvents() async {
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+      loadError = null;
+    });
 
     try {
       final data = await ApiService.getEvents();
@@ -38,7 +43,10 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     } catch (e) {
       if (!mounted) return;
 
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+        loadError = 'Could not load events. $e';
+      });
 
       ScaffoldMessenger.of(
         context,
@@ -63,6 +71,8 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                   child: CircularProgressIndicator(),
                 ),
               )
+            else if (loadError != null)
+              LoadErrorState(message: loadError!, onRetry: loadEvents)
             else if (events.isEmpty)
               const Center(
                 child: Padding(
@@ -141,6 +151,7 @@ class ManageEventTasksScreen extends StatefulWidget {
 class _ManageEventTasksScreenState extends State<ManageEventTasksScreen> {
   List<dynamic> tasks = [];
   bool isLoading = true;
+  String? loadError;
 
   @override
   void initState() {
@@ -149,7 +160,10 @@ class _ManageEventTasksScreenState extends State<ManageEventTasksScreen> {
   }
 
   Future<void> loadTasks() async {
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+      loadError = null;
+    });
 
     try {
       final data = await ApiService.getTasks(widget.eventId);
@@ -163,7 +177,10 @@ class _ManageEventTasksScreenState extends State<ManageEventTasksScreen> {
     } catch (e) {
       if (!mounted) return;
 
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+        loadError = 'Could not load tasks. $e';
+      });
 
       ScaffoldMessenger.of(
         context,
@@ -210,10 +227,7 @@ class _ManageEventTasksScreenState extends State<ManageEventTasksScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                widget.eventName,
-                style: AppTextStyles.pageHeading,
-              ),
+              Text(widget.eventName, style: AppTextStyles.pageHeading),
               const SizedBox(height: 18),
 
               if (isLoading)
@@ -223,6 +237,8 @@ class _ManageEventTasksScreenState extends State<ManageEventTasksScreen> {
                     child: CircularProgressIndicator(),
                   ),
                 )
+              else if (loadError != null)
+                LoadErrorState(message: loadError!, onRetry: loadTasks)
               else if (tasks.isEmpty)
                 const Center(
                   child: Padding(
@@ -249,60 +265,60 @@ class _ManageEventTasksScreenState extends State<ManageEventTasksScreen> {
                       ),
                     ),
                     child: Card(
-                    margin: const EdgeInsets.only(bottom: 15),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            task['task_name'] ?? 'Task',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${formatDate(task['date'])}  ·  '
-                            '${formatTime(task['start_time'])} - '
-                            '${formatTime(task['end_time'])}',
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            '${task['location'] ?? ''}'
-                            '${(task['volunteers_required'] as num?)?.toInt() != null ? '  ·  Needs ${(task['volunteers_required'] as num).toInt()} volunteers' : ''}',
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            TaskVolunteersScreen(
-                                              taskId: (task['id'] as num)
-                                                  .toInt(),
-                                              taskName:
-                                                  task['task_name'] ?? 'Task',
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.groups),
-                                  label: const Text('VOLUNTEERS'),
-                                ),
+                      margin: const EdgeInsets.only(bottom: 15),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              task['task_name'] ?? 'Task',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${formatDate(task['date'])}  ·  '
+                              '${formatTime(task['start_time'])} - '
+                              '${formatTime(task['end_time'])}',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              '${task['location'] ?? ''}'
+                              '${(task['volunteers_required'] as num?)?.toInt() != null ? '  ·  Needs ${(task['volunteers_required'] as num).toInt()} volunteers' : ''}',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              TaskVolunteersScreen(
+                                                taskId: (task['id'] as num)
+                                                    .toInt(),
+                                                taskName:
+                                                    task['task_name'] ?? 'Task',
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.groups),
+                                    label: const Text('VOLUNTEERS'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     ),
                   );
                 }),

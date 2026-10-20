@@ -42,6 +42,8 @@ app.*.map.json
 # Backend secrets and dependencies
 .env
 node_modules/
+mysql-data/
+*.db-journal
 
 # Android Studio will place build artifacts here
 /android/app/debug

@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Single source of truth for how the app looks. Change a color or
-/// spacing value here and it updates everywhere automatically.
+/// Single source of truth for the application's visual styling.
+/// Enforces a consistent, premium light-only theme.
 class AppColors {
-  static const primary = Color(0xFF805A65);
-  static const primaryDark = Color(0xFF583F49);
-  static const accent = Color(0xFFB98561);
-  static const success = Color(0xFF85765E);
-  static const danger = Color(0xFFB66E6B);
-  static const background = Color(0xFFF2ECE5);
-  static const surface = Color(0xFFFAF6EF);
-  static const textPrimary = Color(0xFF20243A);
-  static const textSecondary = Color(0xFF71778B);
-  static const lavender = Color(0xFFEFE3E0);
+  static const primary = Color(0xFF102A43);
+  static const primaryDark = Color(0xFF0B1F33);
+  static const accent = Color(0xFF2E7DD1);
+  static const accentSoft = Color(0xFFEAF4FF);
+  static const success = Color(0xFF1E7F62);
+  static const danger = Color(0xFFD14B5B);
+  static const background = Color(0xFFF3F7FB);
+  static const surface = Color(0xFFFFFFFF);
+  static const surfaceSubtle = Color(0xFFF8FAFC);
+  static const textPrimary = Color(0xFF122033);
+  static const textSecondary = Color(0xFF596B7E);
+  static const textMuted = Color(0xFF8295A9);
+  static const border = Color(0xFFDAE5F2);
+  static const borderFocus = Color(0xFF2E7DD1);
+  static const lavender = Color(0xFFE9F1FF);
+  static const warm = Color(0xFFF6B26B);
 }
 
 class AppSpacing {
@@ -33,7 +39,7 @@ class AppRadius {
 class AppTextStyles {
   static const pageHeading = TextStyle(
     color: AppColors.primaryDark,
-    fontSize: 30,
+    fontSize: 28,
     height: 1.15,
     fontWeight: FontWeight.w800,
     letterSpacing: -0.6,
@@ -41,7 +47,7 @@ class AppTextStyles {
 
   static const sectionHeading = TextStyle(
     color: AppColors.primary,
-    fontSize: 22,
+    fontSize: 20,
     height: 1.2,
     fontWeight: FontWeight.w800,
     letterSpacing: -0.3,
@@ -49,7 +55,7 @@ class AppTextStyles {
 
   static const itemHeading = TextStyle(
     color: AppColors.textPrimary,
-    fontSize: 19,
+    fontSize: 18,
     height: 1.25,
     fontWeight: FontWeight.w700,
   );
@@ -61,6 +67,7 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.background,
       pageTransitionsTheme: PageTransitionsTheme(
         builders: {
@@ -69,6 +76,7 @@ class AppTheme {
         },
       ),
       colorScheme: ColorScheme.fromSeed(
+        brightness: Brightness.light,
         seedColor: AppColors.primary,
         primary: AppColors.primary,
         surface: AppColors.surface,
@@ -102,22 +110,34 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: const Color.fromARGB(255, 204, 170, 112),
+        color: AppColors.surface,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
-          side: BorderSide(color: const Color.fromARGB(255, 118, 82, 82)),
+          side: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: const Color.fromARGB(255, 131, 122, 122),
+          foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.button),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.button),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -128,24 +148,23 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.button),
           ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color.fromARGB(255, 212, 196, 169),
+        fillColor: AppColors.surfaceSubtle,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.button),
-          borderSide: BorderSide(
-            color: const Color.fromARGB(255, 198, 182, 182),
-          ),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.button),
-          borderSide: BorderSide(color: const Color.fromARGB(255, 116, 55, 55)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.button),
@@ -154,7 +173,7 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        indicatorColor: const Color.fromARGB(255, 218, 134, 113),
+        indicatorColor: AppColors.accentSoft,
         elevation: 0,
         height: 68,
         labelTextStyle: WidgetStateProperty.all(

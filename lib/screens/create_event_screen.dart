@@ -47,6 +47,15 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       );
       return;
     }
+    if (volunteersController.text.trim().isNotEmpty &&
+        (volunteersNeeded == null || volunteersNeeded <= 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Volunteers needed must be a positive whole number'),
+        ),
+      );
+      return;
+    }
 
     setState(() => isLoading = true);
 
@@ -73,9 +82,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
       setState(() => isLoading = false);
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
     }
   }
 

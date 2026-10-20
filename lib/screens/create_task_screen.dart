@@ -268,6 +268,15 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       );
       return;
     }
+    if (volunteersController.text.trim().isNotEmpty &&
+        (volunteersRequired == null || volunteersRequired <= 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Volunteers required must be a positive whole number'),
+        ),
+      );
+      return;
+    }
 
     setState(() => isLoading = true);
 

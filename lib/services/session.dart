@@ -12,6 +12,10 @@ class Session {
     currentUser = user;
   }
 
+  static void updateUser(Map<String, dynamic> fields) {
+    currentUser?.addAll(fields);
+  }
+
   static void clear() {
     currentUser = null;
   }
@@ -31,7 +35,27 @@ class Session {
 
   static String get role => (currentUser?['role'] ?? '') as String;
 
-  static bool get isLoggedIn => currentUser != null;
+  static String get roleRequested =>
+      (currentUser?['role_requested'] ?? role) as String;
+
+  static String get roleStatus =>
+      (currentUser?['role_status'] ?? 'approved') as String;
+
+  static bool get isHeadVolunteerPending =>
+      roleRequested == 'Head Volunteer' && roleStatus == 'pending';
+
+  static String? get accessToken {
+    final token = currentUser?['access_token'];
+    return token is String && token.isNotEmpty ? token : null;
+  }
+
+  static bool get isLoggedIn => currentUser != null && accessToken != null;
 
   static bool get isHeadVolunteer => role == 'Head Volunteer';
+
+  static bool get canApproveRoleRequests => isHeadVolunteer;
+
+  static bool get canPostTasks => isHeadVolunteer;
+
+  static bool get canManageVolunteers => isHeadVolunteer;
 }

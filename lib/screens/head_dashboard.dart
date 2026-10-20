@@ -33,7 +33,7 @@ class HeadDashboardPage extends StatelessWidget {
             const SizedBox(height: 6),
             const Text(
               'Manage your events, tasks and volunteers.',
-              style: TextStyle(color: Colors.grey, fontSize: 15),
+              style: AppTextStyles.pageSubtitle,
             ),
             const SizedBox(height: 25),
 
@@ -143,13 +143,16 @@ class _DashboardCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: Colors.indigo, size: 30),
+              Icon(icon, color: AppColors.primary, size: 30),
               const SizedBox(height: 12),
               Text(title, style: AppTextStyles.itemHeading),
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ),
@@ -225,7 +228,10 @@ class _HeadEventsListPageState extends State<HeadEventsListPage> {
                     padding: EdgeInsets.all(30),
                     child: Text(
                       'No events available.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 )

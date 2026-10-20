@@ -79,7 +79,10 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                   padding: EdgeInsets.all(30),
                   child: Text(
                     'No events available.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               )
@@ -245,7 +248,10 @@ class _ManageEventTasksScreenState extends State<ManageEventTasksScreen> {
                     padding: EdgeInsets.all(30),
                     child: Text(
                       'No tasks for this event yet.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 )
@@ -283,13 +289,17 @@ class _ManageEventTasksScreenState extends State<ManageEventTasksScreen> {
                               '${formatDate(task['date'])}  ·  '
                               '${formatTime(task['start_time'])} - '
                               '${formatTime(task['end_time'])}',
-                              style: const TextStyle(color: Colors.grey),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                             const SizedBox(height: 5),
                             Text(
                               '${task['location'] ?? ''}'
                               '${(task['volunteers_required'] as num?)?.toInt() != null ? '  ·  Needs ${(task['volunteers_required'] as num).toInt()} volunteers' : ''}',
-                              style: const TextStyle(color: Colors.grey),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                             const SizedBox(height: 10),
                             Row(

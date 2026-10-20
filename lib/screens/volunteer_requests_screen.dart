@@ -30,7 +30,8 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
   String selectedFilter = 'All';
   String? loadError;
 
-  int activeSegment = 0; // 0: Task Applications, 1: Head Volunteer Role Requests
+  int activeSegment =
+      0; // 0: Task Applications, 1: Head Volunteer Role Requests
   List<dynamic> roleRequests = [];
   bool isLoadingRoleRequests = false;
   int processingUserId = 0;
@@ -83,8 +84,9 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(res['message'] ?? 'Role status updated'),
-          backgroundColor:
-              action == 'approve' ? AppColors.success : AppColors.danger,
+          backgroundColor: action == 'approve'
+              ? AppColors.success
+              : AppColors.danger,
         ),
       );
       await loadRoleRequests();
@@ -221,404 +223,417 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
           ),
         ),
         child: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: loadRequests,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: 1),
-                  duration: const Duration(milliseconds: 550),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, value, child) => Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, 12 * (1 - value)),
-                      child: child,
+          child: RefreshIndicator(
+            onRefresh: loadRequests,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: 1),
+                    duration: const Duration(milliseconds: 550),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) => Opacity(
+                      opacity: value,
+                      child: Transform.translate(
+                        offset: Offset(0, 12 * (1 - value)),
+                        child: child,
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 11,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.75),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.volunteer_activism_rounded,
-                              size: 15,
-                              color: AppColors.primary,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'VOLUNTEER MANAGEMENT',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Volunteer Recruiter Desk',
-                        style: GoogleFonts.dmSerifDisplay(
-                          color: AppColors.primaryDark,
-                          fontSize: 31,
-                          height: 1.12,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Review applications and welcome the people joining your events.',
-                        style: GoogleFonts.manrope(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => setState(() => activeSegment = 0),
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: activeSegment == 0
-                                  ? AppColors.primary
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'Task Applications (${requests.length})',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  color: activeSegment == 0
-                                      ? Colors.white
-                                      : AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 11,
+                            vertical: 7,
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () {
-                            setState(() => activeSegment = 1);
-                            loadRoleRequests();
-                          },
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: activeSegment == 1
-                                  ? AppColors.primary
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'Head Role Requests (${roleRequests.where((r) => (r['role_status'] ?? '').toString().toLowerCase() == 'pending').length})',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  color: activeSegment == 1
-                                      ? Colors.white
-                                      : AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.75),
+                            borderRadius: BorderRadius.circular(30),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-                if (activeSegment == 1)
-                  _buildRoleRequestsList()
-                else ...[
-                Row(
-                  children: [
-                    _RecruiterMetric(
-                      label: 'Applicants',
-                      count: requests.length,
-                      color: AppColors.primary,
-                      icon: Icons.groups_2_outlined,
-                    ),
-                    const SizedBox(width: 9),
-                    _RecruiterMetric(
-                      label: 'To review',
-                      count: requests
-                          .where(
-                            (request) => _requestStatus(request) == 'pending',
-                          )
-                          .length,
-                      color: AppColors.accent,
-                      icon: Icons.hourglass_top_rounded,
-                    ),
-                    const SizedBox(width: 9),
-                    _RecruiterMetric(
-                      label: 'Accepted',
-                      count: requests
-                          .where(
-                            (request) => _requestStatus(request) == 'approved',
-                          )
-                          .length,
-                      color: AppColors.success,
-                      icon: Icons.verified_outlined,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Wrap(
-                  spacing: 8,
-                  children: ['All', 'Pending', 'Accepted', 'Declined'].map((
-                    filter,
-                  ) {
-                    return ChoiceChip(
-                      label: Text(filter),
-                      selected: selectedFilter == filter,
-                      onSelected: (_) =>
-                          setState(() => selectedFilter = filter),
-                      selectedColor: AppColors.lavender,
-                      labelStyle: GoogleFonts.manrope(
-                        color: selectedFilter == filter
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                      side: BorderSide(
-                        color: selectedFilter == filter
-                            ? AppColors.primary.withValues(alpha: 0.25)
-                            : Colors.white.withValues(alpha: 0.8),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 14),
-                if (isLoading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(30),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else if (loadError != null)
-                  LoadErrorState(message: loadError!, onRetry: loadRequests)
-                else if (requests.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(30),
-                      child: Text(
-                        'No applicants yet. New volunteer applications will appear here.',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ),
-                  )
-                else if (filteredRequests.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(30),
-                      child: Text(
-                        'No ${selectedFilter.toLowerCase()} applicants.',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  ...filteredRequests.asMap().entries.map((entry) {
-                    final req = entry.value;
-                    final enrollmentId = _safeInt(req['enrollment_id']);
-                    final status = _requestStatus(req);
-                    final isProcessing = processingId == enrollmentId;
-
-                    if (enrollmentId == 0) {
-                      return const SizedBox.shrink();
-                    }
-
-                    return TweenAnimationBuilder<double>(
-                      key: ValueKey(enrollmentId),
-                      tween: Tween(begin: 0, end: 1),
-                      duration: Duration(milliseconds: 350 + entry.key * 70),
-                      curve: Curves.easeOutCubic,
-                      builder: (context, value, child) => Opacity(
-                        opacity: value,
-                        child: Transform.translate(
-                          offset: Offset(0, 16 * (1 - value)),
-                          child: child,
-                        ),
-                      ),
-                      child: Card(
-                        margin: const EdgeInsets.only(bottom: 15),
-                        elevation: 2,
-                        shadowColor: AppColors.primary.withValues(alpha: 0.08),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(18),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Row(
+                              Icon(
+                                Icons.volunteer_activism_rounded,
+                                size: 15,
+                                color: AppColors.primary,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'VOLUNTEER MANAGEMENT',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Volunteer Recruiter Desk',
+                          style: GoogleFonts.dmSerifDisplay(
+                            color: AppColors.primaryDark,
+                            fontSize: 31,
+                            height: 1.12,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Review applications and welcome the people joining your events.',
+                          style: GoogleFonts.manrope(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setState(() => activeSegment = 0),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: activeSegment == 0
+                                    ? AppColors.primary
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Task Applications (${requests.length})',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: activeSegment == 0
+                                        ? Colors.white
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              setState(() => activeSegment = 1);
+                              loadRoleRequests();
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: activeSegment == 1
+                                    ? AppColors.primary
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Head Role Requests (${roleRequests.where((r) => (r['role_status'] ?? '').toString().toLowerCase() == 'pending').length})',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: activeSegment == 1
+                                        ? Colors.white
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  if (activeSegment == 1)
+                    _buildRoleRequestsList()
+                  else ...[
+                    Row(
+                      children: [
+                        _RecruiterMetric(
+                          label: 'Applicants',
+                          count: requests.length,
+                          color: AppColors.primary,
+                          icon: Icons.groups_2_outlined,
+                        ),
+                        const SizedBox(width: 9),
+                        _RecruiterMetric(
+                          label: 'To review',
+                          count: requests
+                              .where(
+                                (request) =>
+                                    _requestStatus(request) == 'pending',
+                              )
+                              .length,
+                          color: AppColors.accent,
+                          icon: Icons.hourglass_top_rounded,
+                        ),
+                        const SizedBox(width: 9),
+                        _RecruiterMetric(
+                          label: 'Accepted',
+                          count: requests
+                              .where(
+                                (request) =>
+                                    _requestStatus(request) == 'approved',
+                              )
+                              .length,
+                          color: AppColors.success,
+                          icon: Icons.verified_outlined,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    Wrap(
+                      spacing: 8,
+                      children: ['All', 'Pending', 'Accepted', 'Declined'].map((
+                        filter,
+                      ) {
+                        return ChoiceChip(
+                          label: Text(filter),
+                          selected: selectedFilter == filter,
+                          onSelected: (_) =>
+                              setState(() => selectedFilter = filter),
+                          selectedColor: AppColors.lavender,
+                          labelStyle: GoogleFonts.manrope(
+                            color: selectedFilter == filter
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                          side: BorderSide(
+                            color: selectedFilter == filter
+                                ? AppColors.primary.withValues(alpha: 0.25)
+                                : Colors.white.withValues(alpha: 0.8),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 14),
+                    if (isLoading)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(30),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (loadError != null)
+                      LoadErrorState(message: loadError!, onRetry: loadRequests)
+                    else if (requests.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(30),
+                          child: Text(
+                            'No applicants yet. New volunteer applications will appear here.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (filteredRequests.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(30),
+                          child: Text(
+                            'No ${selectedFilter.toLowerCase()} applicants.',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      ...filteredRequests.asMap().entries.map((entry) {
+                        final req = entry.value;
+                        final enrollmentId = _safeInt(req['enrollment_id']);
+                        final status = _requestStatus(req);
+                        final isProcessing = processingId == enrollmentId;
+
+                        if (enrollmentId == 0) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return TweenAnimationBuilder<double>(
+                          key: ValueKey(enrollmentId),
+                          tween: Tween(begin: 0, end: 1),
+                          duration: Duration(
+                            milliseconds: 350 + entry.key * 70,
+                          ),
+                          curve: Curves.easeOutCubic,
+                          builder: (context, value, child) => Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 16 * (1 - value)),
+                              child: child,
+                            ),
+                          ),
+                          child: Card(
+                            margin: const EdgeInsets.only(bottom: 15),
+                            elevation: 2,
+                            shadowColor: AppColors.primary.withValues(
+                              alpha: 0.08,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(18),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  CircleAvatar(
-                                    backgroundColor: AppColors.primary
-                                        .withValues(alpha: 0.12),
-                                    child: const Icon(
-                                      Icons.person,
-                                      color: AppColors.primary,
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: AppColors.primary
+                                            .withValues(alpha: 0.12),
+                                        child: const Icon(
+                                          Icons.person,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              req['name'] ?? 'Student',
+                                              style: GoogleFonts.manrope(
+                                                color: AppColors.textPrimary,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            Text(
+                                              req['email'] ?? '',
+                                              style: GoogleFonts.manrope(
+                                                fontSize: 12,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      _statusChip(status),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    '${req['task_name'] ?? 'Task'}',
+                                    style: GoogleFonts.manrope(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w800,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                  Text(
+                                    '${req['event_name'] ?? ''} · '
+                                    'Student ID: ${req['student_id'] ?? ''}',
+                                    style: GoogleFonts.manrope(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  if (status == 'pending') ...[
+                                    const SizedBox(height: 14),
+                                    Row(
                                       children: [
-                                        Text(
-                                          req['name'] ?? 'Student',
-                                          style: GoogleFonts.manrope(
-                                            color: AppColors.textPrimary,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w800,
+                                        Expanded(
+                                          child: FilledButton.tonal(
+                                            onPressed: isProcessing
+                                                ? null
+                                                : () => updateStatus(
+                                                    enrollmentId,
+                                                    'approved',
+                                                  ),
+                                            style: FilledButton.styleFrom(
+                                              backgroundColor: AppColors.success
+                                                  .withValues(alpha: 0.12),
+                                              foregroundColor:
+                                                  AppColors.success,
+                                            ),
+                                            child: isProcessing
+                                                ? const SizedBox(
+                                                    width: 18,
+                                                    height: 18,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                        ),
+                                                  )
+                                                : const Text(
+                                                    'ACCEPT VOLUNTEER',
+                                                  ),
                                           ),
                                         ),
-                                        Text(
-                                          req['email'] ?? '',
-                                          style: GoogleFonts.manrope(
-                                            fontSize: 12,
-                                            color: AppColors.textSecondary,
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: FilledButton.tonal(
+                                            onPressed: isProcessing
+                                                ? null
+                                                : () => updateStatus(
+                                                    enrollmentId,
+                                                    'rejected',
+                                                  ),
+                                            style: FilledButton.styleFrom(
+                                              backgroundColor: AppColors.danger
+                                                  .withValues(alpha: 0.12),
+                                              foregroundColor: AppColors.danger,
+                                            ),
+                                            child: isProcessing
+                                                ? const SizedBox(
+                                                    width: 18,
+                                                    height: 18,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                        ),
+                                                  )
+                                                : const Text('DECLINE'),
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  _statusChip(status),
+                                  ],
                                 ],
                               ),
-                              const SizedBox(height: 14),
-                              Text(
-                                '${req['task_name'] ?? 'Task'}',
-                                style: GoogleFonts.manrope(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              Text(
-                                '${req['event_name'] ?? ''} · '
-                                'Student ID: ${req['student_id'] ?? ''}',
-                                style: GoogleFonts.manrope(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              if (status == 'pending') ...[
-                                const SizedBox(height: 14),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: FilledButton.tonal(
-                                        onPressed: isProcessing
-                                            ? null
-                                            : () => updateStatus(
-                                                enrollmentId,
-                                                'approved',
-                                              ),
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: Colors.green.shade50,
-                                          foregroundColor:
-                                              Colors.green.shade800,
-                                        ),
-                                        child: isProcessing
-                                            ? const SizedBox(
-                                                width: 18,
-                                                height: 18,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                    ),
-                                              )
-                                            : const Text('ACCEPT VOLUNTEER'),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: FilledButton.tonal(
-                                        onPressed: isProcessing
-                                            ? null
-                                            : () => updateStatus(
-                                                enrollmentId,
-                                                'rejected',
-                                              ),
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: Colors.red.shade50,
-                                          foregroundColor: Colors.red.shade800,
-                                        ),
-                                        child: isProcessing
-                                            ? const SizedBox(
-                                                width: 18,
-                                                height: 18,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                    ),
-                                              )
-                                            : const Text('DECLINE'),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  }),
+                        );
+                      }),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
-        ),
         ),
       ),
     );
@@ -640,11 +655,15 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
           padding: EdgeInsets.all(40),
           child: Column(
             children: [
-              Icon(Icons.verified_user_outlined, size: 48, color: Colors.grey),
+              Icon(
+                Icons.verified_user_outlined,
+                size: 48,
+                color: AppColors.textSecondary,
+              ),
               SizedBox(height: 12),
               Text(
                 'No Head Volunteer role requests found.',
-                style: TextStyle(color: Colors.grey, fontSize: 15),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
               ),
             ],
           ),
@@ -658,8 +677,8 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
         final name = user['name']?.toString() ?? 'User';
         final email = user['email']?.toString() ?? '';
         final studentId = user['student_id']?.toString() ?? '';
-        final status =
-            (user['role_status']?.toString() ?? 'approved').toLowerCase();
+        final status = (user['role_status']?.toString() ?? 'approved')
+            .toLowerCase();
         final isProcessing = processingUserId == userId;
 
         return Card(
@@ -937,7 +956,10 @@ class _TaskVolunteersScreenState extends State<TaskVolunteersScreen> {
                     padding: EdgeInsets.all(30),
                     child: Text(
                       'No volunteers yet.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 )
@@ -996,7 +1018,7 @@ class _TaskVolunteersScreenState extends State<TaskVolunteersScreen> {
                             '${v['email'] ?? ''} · ${v['student_id'] ?? ''}',
                             style: const TextStyle(
                               fontSize: 13,
-                              color: Colors.grey,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                           if (status == 'pending') ...[
@@ -1012,8 +1034,9 @@ class _TaskVolunteersScreenState extends State<TaskVolunteersScreen> {
                                             'approved',
                                           ),
                                     style: FilledButton.styleFrom(
-                                      backgroundColor: Colors.green.shade50,
-                                      foregroundColor: Colors.green.shade800,
+                                      backgroundColor: AppColors.success
+                                          .withValues(alpha: 0.12),
+                                      foregroundColor: AppColors.success,
                                     ),
                                     child: const Text('APPROVE'),
                                   ),
@@ -1028,8 +1051,9 @@ class _TaskVolunteersScreenState extends State<TaskVolunteersScreen> {
                                             'rejected',
                                           ),
                                     style: FilledButton.styleFrom(
-                                      backgroundColor: Colors.red.shade50,
-                                      foregroundColor: Colors.red.shade800,
+                                      backgroundColor: AppColors.danger
+                                          .withValues(alpha: 0.12),
+                                      foregroundColor: AppColors.danger,
                                     ),
                                     child: const Text('REJECT'),
                                   ),
@@ -1052,11 +1076,11 @@ class _TaskVolunteersScreenState extends State<TaskVolunteersScreen> {
   Color _statusColor(String status) {
     switch (status) {
       case 'approved':
-        return Colors.green;
+        return AppColors.success;
       case 'rejected':
-        return Colors.red;
+        return AppColors.danger;
       default:
-        return Colors.orange;
+        return AppColors.accent;
     }
   }
 }

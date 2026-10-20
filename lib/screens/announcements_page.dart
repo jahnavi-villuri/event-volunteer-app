@@ -157,7 +157,10 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                     padding: EdgeInsets.all(30),
                     child: Text(
                       'No announcements yet.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 )

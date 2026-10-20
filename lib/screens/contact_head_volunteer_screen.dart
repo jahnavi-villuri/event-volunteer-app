@@ -104,17 +104,17 @@ class _ContactHeadVolunteerScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.support_agent, size: 60, color: Colors.indigo),
+            const Icon(Icons.support_agent, size: 60, color: AppColors.primary),
             const SizedBox(height: 15),
             const Text(
               'Need help or have a question?',
               style: AppTextStyles.sectionHeading,
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Send a message to the head volunteer of the event. '
               'They will reach out to answer your query.',
-              style: TextStyle(color: Colors.grey, fontSize: 14, height: 1.4),
+              style: AppTextStyles.pageSubtitle.copyWith(fontSize: 14),
             ),
             const SizedBox(height: 24),
 

@@ -116,7 +116,7 @@ class _HelpRequestsScreenState extends State<HelpRequestsScreen> {
                   const SizedBox(height: 8),
                   const Text(
                     'Questions and help requests from volunteers.',
-                    style: TextStyle(color: Colors.grey),
+                    style: AppTextStyles.pageSubtitle,
                   ),
                   const SizedBox(height: 20),
 
@@ -139,7 +139,10 @@ class _HelpRequestsScreenState extends State<HelpRequestsScreen> {
                         padding: EdgeInsets.all(30),
                         child: Text(
                           'No help requests yet.',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     ),
@@ -148,6 +151,9 @@ class _HelpRequestsScreenState extends State<HelpRequestsScreen> {
                   ...requests.map((req) {
                     final requestId = (req['id'] as num).toInt();
                     final status = req['status'] ?? 'open';
+                    final statusColor = status == 'resolved'
+                        ? AppColors.success
+                        : AppColors.accent;
                     final isProcessing = processingId == requestId;
 
                     return Card(
@@ -160,7 +166,7 @@ class _HelpRequestsScreenState extends State<HelpRequestsScreen> {
                             Row(
                               children: [
                                 const CircleAvatar(
-                                  backgroundColor: Colors.indigo,
+                                  backgroundColor: AppColors.primary,
                                   child: Icon(
                                     Icons.support_agent,
                                     color: Colors.white,
@@ -169,7 +175,8 @@ class _HelpRequestsScreenState extends State<HelpRequestsScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         req['name'] ?? 'Student',
@@ -183,7 +190,7 @@ class _HelpRequestsScreenState extends State<HelpRequestsScreen> {
                                         '${formatDateTime(req['created_at'])}',
                                         style: const TextStyle(
                                           fontSize: 13,
-                                          color: Colors.grey,
+                                          color: AppColors.textSecondary,
                                         ),
                                       ),
                                     ],
@@ -195,18 +202,13 @@ class _HelpRequestsScreenState extends State<HelpRequestsScreen> {
                                     vertical: 6,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: (status == 'resolved'
-                                            ? Colors.green
-                                            : Colors.orange)
-                                        .withValues(alpha: 0.12),
+                                    color: statusColor.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
                                     status.toUpperCase(),
                                     style: TextStyle(
-                                      color: status == 'resolved'
-                                          ? Colors.green
-                                          : Colors.orange,
+                                      color: statusColor,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
@@ -228,8 +230,8 @@ class _HelpRequestsScreenState extends State<HelpRequestsScreen> {
                                       ? null
                                       : () => resolve(requestId),
                                   style: FilledButton.styleFrom(
-                                    backgroundColor: Colors.indigo.shade50,
-                                    foregroundColor: Colors.indigo,
+                                    backgroundColor: AppColors.accentSoft,
+                                    foregroundColor: AppColors.primary,
                                   ),
                                   child: const Text('MARK AS RESOLVED'),
                                 ),

@@ -31,6 +31,13 @@ class VolunteerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Volunteer Connect',
       theme: AppTheme.light,
+      builder: (context, child) => DefaultTextStyle.merge(
+        style: const TextStyle(decoration: TextDecoration.none),
+        child: ColoredBox(
+          color: AppColors.background,
+          child: child ?? const SizedBox.shrink(),
+        ),
+      ),
       home: const SplashScreen(),
     );
   }
@@ -73,7 +80,7 @@ class _SplashScreenState extends State<SplashScreen> {
               width: 90,
               height: 90,
               decoration: BoxDecoration(
-                color: Colors.indigo,
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(25),
               ),
               child: const Icon(
@@ -87,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const SizedBox(height: 8),
             const Text(
               'Volunteer smarter. Work together.',
-              style: TextStyle(color: Colors.grey, fontSize: 15),
+              style: AppTextStyles.pageSubtitle,
             ),
           ],
         ),
@@ -347,8 +354,8 @@ class FeatureCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
-              backgroundColor: Colors.indigo.shade50,
-              child: Icon(icon, color: Colors.indigo),
+              backgroundColor: AppColors.accentSoft,
+              child: Icon(icon, color: AppColors.primary),
             ),
             const SizedBox(width: 15),
             Expanded(
@@ -365,7 +372,10 @@ class FeatureCard extends StatelessWidget {
                   const SizedBox(height: 5),
                   Text(
                     description,
-                    style: const TextStyle(color: Colors.grey, height: 1.4),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),
@@ -399,7 +409,7 @@ class StepCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: Colors.indigo,
+          backgroundColor: AppColors.primary,
           child: Text(
             number,
             style: const TextStyle(
@@ -505,7 +515,7 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             const SizedBox(height: 30),
 
-            const Icon(Icons.lock_outline, size: 70, color: Colors.indigo),
+            const Icon(Icons.lock_outline, size: 70, color: AppColors.primary),
 
             const SizedBox(height: 20),
 
@@ -656,7 +666,9 @@ class _SignupScreenState extends State<SignupScreen> {
     if (selectedRole == null || selectedRole!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select a role (Volunteer or Head Volunteer) before registering.'),
+          content: Text(
+            'Please select a role (Volunteer or Head Volunteer) before registering.',
+          ),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -741,7 +753,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
     return Semantics(
       selected: isSelected,
-      label: '$title account role. ${isSelected ? "Currently selected" : "Not selected"}',
+      label:
+          '$title account role. ${isSelected ? "Currently selected" : "Not selected"}',
       button: true,
       child: InkWell(
         onTap: () {
@@ -778,7 +791,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : AppColors.lavender,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.lavender,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -848,7 +863,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? AppColors.primary : AppColors.border,
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.border,
                         width: 2,
                       ),
                     ),
@@ -936,11 +953,17 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Create Your Account', style: AppTextStyles.pageHeading),
+                  const Text(
+                    'Create Your Account',
+                    style: AppTextStyles.pageHeading,
+                  ),
                   const SizedBox(height: 6),
                   const Text(
                     'Join the community and start making an impact.',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
@@ -1115,6 +1138,10 @@ class _VolunteerHomeScreenState extends State<VolunteerHomeScreen> {
 
   bool get isHeadVolunteer => Session.isHeadVolunteer;
 
+  void _selectTab(int index) {
+    setState(() => selectedIndex = index);
+  }
+
   @override
   Widget build(BuildContext context) {
     final pages = isHeadVolunteer
@@ -1123,50 +1150,30 @@ class _VolunteerHomeScreenState extends State<VolunteerHomeScreen> {
             const EventsPage(),
             const VolunteerRequestsPage(),
             const AnnouncementsPage(),
-            ProfilePage(user: widget.user),
+            ProfilePage(user: widget.user, onNavigateToTab: _selectTab),
           ]
         : <Widget>[
-            HomePage(user: widget.user),
+            HomePage(user: widget.user, onNavigateToTab: _selectTab),
             const EventsPage(),
             const MyTasksPage(),
             const AnnouncementsPage(),
-            ProfilePage(user: widget.user),
+            ProfilePage(user: widget.user, onNavigateToTab: _selectTab),
           ];
 
     return Scaffold(
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 280),
-        reverseDuration: const Duration(milliseconds: 220),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInCubic,
-        transitionBuilder: (child, animation) => FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.025),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          ),
-        ),
-        child: KeyedSubtree(
-          key: ValueKey(selectedIndex),
-          child: pages[selectedIndex],
-        ),
-      ),
+      backgroundColor: AppColors.background,
+      body: IndexedStack(index: selectedIndex, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: (index) {
-          setState(() {
-            selectedIndex = index;
-          });
+          _selectTab(index);
         },
         destinations: isHeadVolunteer
             ? const [
                 NavigationDestination(
-                  icon: Icon(Icons.dashboard_outlined),
-                  selectedIcon: Icon(Icons.dashboard),
-                  label: 'Dashboard',
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home),
+                  label: 'Home',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.event_outlined),
@@ -1240,8 +1247,13 @@ class VolunteerRequestsPage extends StatelessWidget {
 
 class HomePage extends StatefulWidget {
   final Map<String, dynamic> user;
+  final ValueChanged<int> onNavigateToTab;
 
-  const HomePage({super.key, required this.user});
+  const HomePage({
+    super.key,
+    required this.user,
+    required this.onNavigateToTab,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -1301,7 +1313,7 @@ class _HomePageState extends State<HomePage> {
 
               const Text(
                 'Ready to make a difference?',
-                style: TextStyle(color: Colors.grey, fontSize: 15),
+                style: AppTextStyles.pageSubtitle,
               ),
 
               if (Session.isHeadVolunteerPending) ...[
@@ -1311,11 +1323,18 @@ class _HomePageState extends State<HomePage> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEF3C7),
                     borderRadius: BorderRadius.circular(AppRadius.card),
-                    border: Border.all(color: const Color(0xFFF59E0B), width: 1.2),
+                    border: Border.all(
+                      color: const Color(0xFFF59E0B),
+                      width: 1.2,
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, color: Color(0xFFB45309), size: 24),
+                      const Icon(
+                        Icons.info_outline,
+                        color: Color(0xFFB45309),
+                        size: 24,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -1354,14 +1373,7 @@ class _HomePageState extends State<HomePage> {
                     child: _QuickActionCard(
                       icon: Icons.event,
                       title: 'View Events',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const EventsPage(),
-                          ),
-                        );
-                      },
+                      onTap: () => widget.onNavigateToTab(1),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1369,14 +1381,7 @@ class _HomePageState extends State<HomePage> {
                     child: _QuickActionCard(
                       icon: Icons.task_alt,
                       title: 'My Tasks',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const MyTasksPage(),
-                          ),
-                        );
-                      },
+                      onTap: () => widget.onNavigateToTab(2),
                     ),
                   ),
                 ],
@@ -1390,14 +1395,7 @@ class _HomePageState extends State<HomePage> {
                     child: _QuickActionCard(
                       icon: Icons.campaign,
                       title: 'Announcements',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AnnouncementsPage(),
-                          ),
-                        );
-                      },
+                      onTap: () => widget.onNavigateToTab(3),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1443,7 +1441,7 @@ class _HomePageState extends State<HomePage> {
               else if (events.isEmpty)
                 const Text(
                   'No upcoming events.',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppColors.textSecondary),
                 )
               else
                 ...events.map((event) {
@@ -1649,7 +1647,10 @@ class _EventsPageState extends State<EventsPage> {
                     padding: EdgeInsets.all(30),
                     child: Text(
                       'No events available.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 )
@@ -2097,7 +2098,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     padding: EdgeInsets.all(30),
                     child: Text(
                       'No tasks available for this event.',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 )
@@ -2163,7 +2167,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               else if (announcements.isEmpty)
                 const Text(
                   'No announcements for this event yet.',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppColors.textSecondary),
                 )
               else
                 ...announcements.asMap().entries.map((entry) {
@@ -2204,7 +2208,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                               formatDateTime(a['created_at']),
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ],
@@ -2251,17 +2255,29 @@ class VolunteerTaskCard extends StatelessWidget {
   });
 
   Color _statusColor(String status) {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'approved':
-        return Colors.green;
+        return AppColors.success;
       case 'rejected':
-        return Colors.red;
+        return AppColors.danger;
       default:
-        return Colors.orange;
+        return AppColors.accent;
     }
   }
 
-  String get _statusLabel => enrollmentStatus?.toUpperCase() ?? 'PENDING';
+  String get _statusLabel {
+    switch (enrollmentStatus?.toLowerCase()) {
+      case 'approved':
+        return 'ACCEPTED';
+      case 'rejected':
+        return 'DECLINED';
+      case 'pending':
+      case null:
+        return 'PENDING';
+      default:
+        return enrollmentStatus!.toUpperCase();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2337,7 +2353,9 @@ class VolunteerTaskCard extends StatelessWidget {
 // ============================================================
 
 class MyTasksPage extends StatefulWidget {
-  const MyTasksPage({super.key});
+  final bool showAppBar;
+
+  const MyTasksPage({super.key, this.showAppBar = false});
 
   @override
   State<MyTasksPage> createState() => _MyTasksPageState();
@@ -2385,7 +2403,7 @@ class _MyTasksPageState extends State<MyTasksPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    final content = SafeArea(
       child: RefreshIndicator(
         onRefresh: loadTasks,
         child: SingleChildScrollView(
@@ -2394,27 +2412,13 @@ class _MyTasksPageState extends State<MyTasksPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'My Tasks',
-                style: TextStyle(
-                  color: AppColors.primaryDark,
-                  fontSize: 36,
-                  height: 1.12,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.8,
-                ),
-              ),
+              const Text('My Tasks', style: AppTextStyles.pageHeading),
 
               const SizedBox(height: 8),
 
               const Text(
                 'Your shifts, status and event details in one place.',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  height: 1.4,
-                ),
+                style: AppTextStyles.pageSubtitle,
               ),
 
               const SizedBox(height: 20),
@@ -2467,6 +2471,14 @@ class _MyTasksPageState extends State<MyTasksPage> {
         ),
       ),
     );
+
+    if (widget.showAppBar) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('My Tasks')),
+        body: content,
+      );
+    }
+    return content;
   }
 }
 
@@ -2497,7 +2509,7 @@ class _TaskSummary extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFE9D9D4), Color(0xFFF5EAE3)],
+          colors: [AppColors.accentSoft, AppColors.surface],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -2648,7 +2660,7 @@ class TaskCard extends StatelessWidget {
   });
 
   Color _statusColor(String status) {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'approved':
         return AppColors.success;
       case 'rejected':
@@ -2674,6 +2686,8 @@ class TaskCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     taskName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w800,
@@ -2691,7 +2705,7 @@ class TaskCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    status.toUpperCase(),
+                    _statusLabel(status),
                     style: TextStyle(
                       color: statusColor,
                       fontWeight: FontWeight.w800,
@@ -2748,6 +2762,19 @@ class TaskCard extends StatelessWidget {
       ),
     );
   }
+
+  String _statusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'ACCEPTED';
+      case 'rejected':
+        return 'DECLINED';
+      case 'pending':
+        return 'PENDING';
+      default:
+        return status.toUpperCase();
+    }
+  }
 }
 
 // ============================================================
@@ -2790,7 +2817,7 @@ class TaskDetailsScreen extends StatelessWidget {
             Text(
               eventName,
               style: const TextStyle(
-                color: Colors.indigo,
+                color: AppColors.primary,
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
               ),
@@ -2868,7 +2895,7 @@ class InfoRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.indigo, size: 21),
+          Icon(icon, color: AppColors.primary, size: 21),
           const SizedBox(width: 12),
           Expanded(
             child: RichText(
@@ -2880,7 +2907,7 @@ class InfoRow extends StatelessWidget {
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
-                      color: Colors.grey,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   TextSpan(text: value, style: const TextStyle(fontSize: 15)),
@@ -3024,7 +3051,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
             const SizedBox(height: 24),
 
-            const Text('Database & Server', style: AppTextStyles.sectionHeading),
+            const Text(
+              'Database & Server',
+              style: AppTextStyles.sectionHeading,
+            ),
             const SizedBox(height: 12),
             Card(
               child: Padding(
@@ -3177,8 +3207,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
 class ProfilePage extends StatefulWidget {
   final Map<String, dynamic> user;
+  final ValueChanged<int>? onNavigateToTab;
 
-  const ProfilePage({super.key, required this.user});
+  const ProfilePage({super.key, required this.user, this.onNavigateToTab});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -3232,7 +3263,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
             const SizedBox(height: 5),
 
-            Text(role, style: const TextStyle(color: Colors.grey)),
+            Text(role, style: const TextStyle(color: AppColors.textSecondary)),
 
             const SizedBox(height: 30),
 
@@ -3283,12 +3314,18 @@ class _ProfilePageState extends State<ProfilePage> {
                     subtitle: const Text('View your volunteer sign-ups'),
                     trailing: Icon(Icons.arrow_forward_ios),
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MyTasksPage(),
-                        ),
-                      );
+                      if (!Session.isHeadVolunteer &&
+                          widget.onNavigateToTab != null) {
+                        widget.onNavigateToTab!(2);
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const MyTasksPage(showAppBar: true),
+                          ),
+                        );
+                      }
                     },
                   ),
                 ],

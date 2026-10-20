@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/load_error_state.dart';
+
+int safeEnrollmentId(dynamic value) {
+  if (value == null) return 0;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value.toString()) ?? 0;
+}
 
 // ============================================================
 // VOLUNTEER REQUESTS (ALL ENROLLMENTS)
@@ -20,6 +28,14 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
   bool isLoading = true;
   int processingId = 0;
   String selectedFilter = 'All';
+  String? loadError;
+
+  int activeSegment = 0; // 0: Task Applications, 1: Head Volunteer Role Requests
+  List<dynamic> roleRequests = [];
+  bool isLoadingRoleRequests = false;
+  int processingUserId = 0;
+
+  static int _safeInt(dynamic value) => safeEnrollmentId(value);
 
   String _requestStatus(dynamic request) =>
       (request['status']?.toString() ?? 'pending').toLowerCase();
@@ -40,10 +56,55 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
   void initState() {
     super.initState();
     loadRequests();
+    loadRoleRequests();
+  }
+
+  Future<void> loadRoleRequests() async {
+    setState(() => isLoadingRoleRequests = true);
+    try {
+      final data = await ApiService.getRoleRequests();
+      if (!mounted) return;
+      setState(() {
+        roleRequests = data;
+        isLoadingRoleRequests = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => isLoadingRoleRequests = false);
+    }
+  }
+
+  Future<void> updateRoleStatus(int targetUserId, String action) async {
+    setState(() => processingUserId = targetUserId);
+    try {
+      final res = await ApiService.updateRoleRequest(targetUserId, action);
+      if (!mounted) return;
+      setState(() => processingUserId = 0);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res['message'] ?? 'Role status updated'),
+          backgroundColor:
+              action == 'approve' ? AppColors.success : AppColors.danger,
+        ),
+      );
+      await loadRoleRequests();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => processingUserId = 0);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update role: $e'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 
   Future<void> loadRequests() async {
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+      loadError = null;
+    });
 
     try {
       final data = await ApiService.getEnrollments();
@@ -57,7 +118,10 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
     } catch (e) {
       if (!mounted) return;
 
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+        loadError = 'Could not load volunteer requests. $e';
+      });
 
       ScaffoldMessenger.of(
         context,
@@ -86,7 +150,7 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
         ),
       );
 
-      loadRequests();
+      await loadRequests();
     } catch (e) {
       if (!mounted) return;
 
@@ -140,15 +204,23 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFE9EEFF), Color(0xFFF5F3FF), Color(0xFFF8F7FC)],
-        ),
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const Text('Volunteer Recruiter Desk'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: AppColors.textPrimary,
       ),
-      child: SafeArea(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFE9EEFF), Color(0xFFF5F3FF), Color(0xFFF8F7FC)],
+          ),
+        ),
+        child: SafeArea(
         child: RefreshIndicator(
           onRefresh: loadRequests,
           child: SingleChildScrollView(
@@ -222,7 +294,80 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => setState(() => activeSegment = 0),
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: activeSegment == 0
+                                  ? AppColors.primary
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Task Applications (${requests.length})',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: activeSegment == 0
+                                      ? Colors.white
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            setState(() => activeSegment = 1);
+                            loadRoleRequests();
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: activeSegment == 1
+                                  ? AppColors.primary
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Head Role Requests (${roleRequests.where((r) => (r['role_status'] ?? '').toString().toLowerCase() == 'pending').length})',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: activeSegment == 1
+                                      ? Colors.white
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                if (activeSegment == 1)
+                  _buildRoleRequestsList()
+                else ...[
                 Row(
                   children: [
                     _RecruiterMetric(
@@ -290,6 +435,8 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
                       child: CircularProgressIndicator(),
                     ),
                   )
+                else if (loadError != null)
+                  LoadErrorState(message: loadError!, onRetry: loadRequests)
                 else if (requests.isEmpty)
                   const Center(
                     child: Padding(
@@ -316,9 +463,13 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
                 else
                   ...filteredRequests.asMap().entries.map((entry) {
                     final req = entry.value;
-                    final enrollmentId = (req['enrollment_id'] as num).toInt();
+                    final enrollmentId = _safeInt(req['enrollment_id']);
                     final status = _requestStatus(req);
                     final isProcessing = processingId == enrollmentId;
+
+                    if (enrollmentId == 0) {
+                      return const SizedBox.shrink();
+                    }
 
                     return TweenAnimationBuilder<double>(
                       key: ValueKey(enrollmentId),
@@ -463,11 +614,151 @@ class _VolunteerRequestsScreenState extends State<VolunteerRequestsScreen> {
                       ),
                     );
                   }),
+                ],
               ],
             ),
           ),
         ),
+        ),
       ),
+    );
+  }
+
+  Widget _buildRoleRequestsList() {
+    if (isLoadingRoleRequests) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(30),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (roleRequests.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Column(
+            children: [
+              Icon(Icons.verified_user_outlined, size: 48, color: Colors.grey),
+              SizedBox(height: 12),
+              Text(
+                'No Head Volunteer role requests found.',
+                style: TextStyle(color: Colors.grey, fontSize: 15),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: roleRequests.map((user) {
+        final userId = user['id'] as int? ?? 0;
+        final name = user['name']?.toString() ?? 'User';
+        final email = user['email']?.toString() ?? '';
+        final studentId = user['student_id']?.toString() ?? '';
+        final status =
+            (user['role_status']?.toString() ?? 'approved').toLowerCase();
+        final isProcessing = processingUserId == userId;
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: AppColors.lavender,
+                      child: Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            email,
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                          if (studentId.isNotEmpty)
+                            Text(
+                              'Student ID: $studentId',
+                              style: const TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 12,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    _statusChip(status),
+                  ],
+                ),
+                if (status == 'pending') ...[
+                  const SizedBox(height: 14),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.danger,
+                        ),
+                        onPressed: isProcessing
+                            ? null
+                            : () => updateRoleStatus(userId, 'reject'),
+                        icon: const Icon(Icons.close, size: 18),
+                        label: const Text('Decline'),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.success,
+                        ),
+                        onPressed: isProcessing
+                            ? null
+                            : () => updateRoleStatus(userId, 'approve'),
+                        icon: isProcessing
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.check, size: 18),
+                        label: const Text('Approve Head Role'),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
@@ -548,6 +839,8 @@ class _TaskVolunteersScreenState extends State<TaskVolunteersScreen> {
   bool isLoading = true;
   int processingId = 0;
 
+  static int _safeInt(dynamic value) => safeEnrollmentId(value);
+
   @override
   void initState() {
     super.initState();
@@ -597,7 +890,7 @@ class _TaskVolunteersScreenState extends State<TaskVolunteersScreen> {
         ),
       );
 
-      loadVolunteers();
+      await loadVolunteers();
     } catch (e) {
       if (!mounted) return;
 
@@ -650,9 +943,13 @@ class _TaskVolunteersScreenState extends State<TaskVolunteersScreen> {
                 )
               else
                 ...volunteers.map((v) {
-                  final enrollmentId = (v['enrollment_id'] as num).toInt();
+                  final enrollmentId = _safeInt(v['enrollment_id']);
                   final status = v['status'] ?? 'pending';
                   final isProcessing = processingId == enrollmentId;
+
+                  if (enrollmentId == 0) {
+                    return const SizedBox.shrink();
+                  }
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 15),

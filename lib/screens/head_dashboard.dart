@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/event_artwork.dart';
+import '../widgets/load_error_state.dart';
 import 'create_event_screen.dart';
 import 'create_announcement_screen.dart';
 import 'manage_events_screen.dart';
@@ -28,10 +29,7 @@ class HeadDashboardPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Hello, $name 👋',
-              style: AppTextStyles.pageHeading,
-            ),
+            Text('Hello, $name 👋', style: AppTextStyles.pageHeading),
             const SizedBox(height: 6),
             const Text(
               'Manage your events, tasks and volunteers.',
@@ -147,10 +145,7 @@ class _DashboardCard extends StatelessWidget {
             children: [
               Icon(icon, color: Colors.indigo, size: 30),
               const SizedBox(height: 12),
-              Text(
-                title,
-                style: AppTextStyles.itemHeading,
-              ),
+              Text(title, style: AppTextStyles.itemHeading),
               const SizedBox(height: 3),
               Text(
                 subtitle,
@@ -174,6 +169,7 @@ class HeadEventsListPage extends StatefulWidget {
 class _HeadEventsListPageState extends State<HeadEventsListPage> {
   List<dynamic> events = [];
   bool isLoading = true;
+  String? loadError;
 
   @override
   void initState() {
@@ -182,7 +178,10 @@ class _HeadEventsListPageState extends State<HeadEventsListPage> {
   }
 
   Future<void> loadEvents() async {
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+      loadError = null;
+    });
     try {
       final data = await ApiService.getEvents();
       if (!mounted) return;
@@ -192,7 +191,10 @@ class _HeadEventsListPageState extends State<HeadEventsListPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+        loadError = 'Could not load events. $e';
+      });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to load events: $e')));
@@ -215,6 +217,8 @@ class _HeadEventsListPageState extends State<HeadEventsListPage> {
                     child: CircularProgressIndicator(),
                   ),
                 )
+              : loadError != null
+              ? LoadErrorState(message: loadError!, onRetry: loadEvents)
               : events.isEmpty
               ? const Center(
                   child: Padding(

@@ -8,6 +8,7 @@ class CreateTaskScreen extends StatefulWidget {
   final String? eventName;
   final String? eventDate;
   final String? eventLocation;
+  final Map<String, dynamic>? task;
 
   const CreateTaskScreen({
     super.key,
@@ -15,6 +16,7 @@ class CreateTaskScreen extends StatefulWidget {
     this.eventName,
     this.eventDate,
     this.eventLocation,
+    this.task,
   });
 
   @override
@@ -28,12 +30,27 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   final endTimeController = TextEditingController();
   final locationController = TextEditingController();
   final instructionsController = TextEditingController();
+  final descriptionController = TextEditingController();
   final volunteersController = TextEditingController();
+  final compensationAmountController = TextEditingController();
+  final compensationCurrencyController = TextEditingController(text: 'INR');
+  final compensationTermsController = TextEditingController();
+  final requirementsController = TextEditingController();
 
   List<dynamic> events = [];
   bool loadingEvents = false;
   int? selectedEventId;
   bool isLoading = false;
+  String taskStatus = 'Open';
+  String compensationType = 'unpaid';
+
+  static const _taskStatuses = [
+    'Open',
+    'Assigned',
+    'In Progress',
+    'Completed',
+    'Cancelled',
+  ];
 
   static const _sportsMeetActivities = [
     _ActivityPreset(
@@ -153,12 +170,40 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     selectedEventId = widget.eventId;
     dateController.text = _dateOnly(widget.eventDate);
     locationController.text = widget.eventLocation ?? '';
+    final task = widget.task;
+    if (task != null) {
+      taskNameController.text = task['task_name']?.toString() ?? '';
+      dateController.text = _dateOnly(task['date']?.toString());
+      startTimeController.text = _dateOnlyTime(task['start_time']?.toString());
+      endTimeController.text = _dateOnlyTime(task['end_time']?.toString());
+      locationController.text = task['location']?.toString() ?? '';
+      instructionsController.text = task['instructions']?.toString() ?? '';
+      descriptionController.text = task['description']?.toString() ?? '';
+      volunteersController.text = task['volunteers_required']?.toString() ?? '';
+      compensationType =
+          task['compensation_type']?.toString().toLowerCase() ?? 'unpaid';
+      compensationAmountController.text =
+          task['compensation_amount']?.toString() ?? '';
+      compensationCurrencyController.text =
+          task['compensation_currency']?.toString() ?? 'INR';
+      compensationTermsController.text =
+          task['compensation_terms']?.toString() ?? '';
+      requirementsController.text =
+          task['additional_requirements']?.toString() ?? '';
+      taskStatus = _taskStatuses.contains(task['status'])
+          ? task['status'].toString()
+          : 'Open';
+    }
     if (selectedEventId == null) {
       loadEvents();
     }
   }
 
   String _dateOnly(String? date) => date?.split('T').first ?? '';
+  String _dateOnlyTime(String? time) {
+    final value = time ?? '';
+    return value.length >= 5 ? value.substring(0, 5) : value;
+  }
 
   void _selectEvent(int? eventId) {
     final matchingEvents = events.where(
@@ -252,9 +297,13 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     final endTime = endTimeController.text.trim();
     final location = locationController.text.trim();
     final volunteersRequired = int.tryParse(volunteersController.text.trim());
+    final compensationAmount = compensationType == 'unpaid'
+        ? null
+        : double.tryParse(compensationAmountController.text.trim());
 
     if (selectedEventId == null ||
         taskName.isEmpty ||
+        descriptionController.text.trim().isEmpty ||
         date.isEmpty ||
         startTime.isEmpty ||
         endTime.isEmpty ||
@@ -262,18 +311,46 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Event, task name, date, times and location are required',
+            'Event, task name, description, date, times and location are required',
           ),
         ),
       );
       return;
     }
-    if (volunteersController.text.trim().isNotEmpty &&
-        (volunteersRequired == null || volunteersRequired <= 0)) {
+    if (volunteersRequired == null || volunteersRequired <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Volunteers required must be a positive whole number'),
+          content: Text('Volunteer capacity must be a positive whole number'),
         ),
+      );
+      return;
+    }
+    final startDateTime = DateTime.tryParse('${date}T$startTime');
+    final endDateTime = DateTime.tryParse('${date}T$endTime');
+
+    if (startDateTime == null ||
+        endDateTime == null ||
+        !endDateTime.isAfter(startDateTime)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('End time must be later than start time')),
+      );
+      return;
+    }
+    if (compensationType != 'unpaid' &&
+        (compensationAmount == null ||
+            !compensationAmount.isFinite ||
+            compensationAmount < 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter a valid non-negative compensation amount'),
+        ),
+      );
+      return;
+    }
+    final currency = compensationCurrencyController.text.trim().toUpperCase();
+    if (!RegExp(r'^[A-Z]{3}$').hasMatch(currency)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Currency must be a 3-letter code')),
       );
       return;
     }
@@ -281,23 +358,57 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     setState(() => isLoading = true);
 
     try {
-      await ApiService.createTask(
-        eventId: selectedEventId!,
-        taskName: taskName,
-        date: date,
-        startTime: startTime,
-        endTime: endTime,
-        location: location,
-        instructions: instructionsController.text.trim(),
-        volunteersRequired: volunteersRequired,
-      ).timeout(const Duration(seconds: 10));
+      if (widget.task case final task?) {
+        final taskId = (task['id'] as num).toInt();
+        await ApiService.updateTask(
+          taskId: taskId,
+          details: {
+            'task_name': taskName,
+            'description': descriptionController.text.trim(),
+            'date': date,
+            'start_time': '$startTime:00',
+            'end_time': '$endTime:00',
+            'location': location,
+            'instructions': instructionsController.text.trim(),
+            'volunteers_required': volunteersRequired,
+            'status': taskStatus,
+            'compensation_type': compensationType,
+            'compensation_amount': compensationAmount,
+            'compensation_currency': currency,
+            'compensation_terms': compensationTermsController.text.trim(),
+            'additional_requirements': requirementsController.text.trim(),
+          },
+        ).timeout(const Duration(seconds: 10));
+      } else {
+        await ApiService.createTask(
+          eventId: selectedEventId!,
+          taskName: taskName,
+          date: date,
+          startTime: '$startTime:00',
+          endTime: '$endTime:00',
+          location: location,
+          instructions: instructionsController.text.trim(),
+          description: descriptionController.text.trim(),
+          volunteersRequired: volunteersRequired,
+          status: taskStatus,
+          compensationType: compensationType,
+          compensationAmount: compensationAmount,
+          compensationCurrency: currency,
+          compensationTerms: compensationTermsController.text,
+          additionalRequirements: requirementsController.text,
+        ).timeout(const Duration(seconds: 10));
+      }
 
       if (!mounted) return;
 
       setState(() => isLoading = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Task created successfully')),
+        SnackBar(
+          content: Text(
+            widget.task == null ? 'Task created successfully' : 'Task updated',
+          ),
+        ),
       );
 
       Navigator.pop(context, true);
@@ -320,14 +431,21 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     endTimeController.dispose();
     locationController.dispose();
     instructionsController.dispose();
+    descriptionController.dispose();
     volunteersController.dispose();
+    compensationAmountController.dispose();
+    compensationCurrencyController.dispose();
+    compensationTermsController.dispose();
+    requirementsController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Task')),
+      appBar: AppBar(
+        title: Text(widget.task == null ? 'Create Task' : 'Edit Task'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -437,6 +555,35 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             ),
             const SizedBox(height: 16),
             TextField(
+              controller: descriptionController,
+              maxLines: 3,
+              maxLength: 2000,
+              decoration: const InputDecoration(
+                labelText: 'Task description and responsibilities',
+                prefixIcon: Icon(Icons.description_outlined),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: taskStatus,
+              decoration: const InputDecoration(
+                labelText: 'Task status',
+                prefixIcon: Icon(Icons.flag_outlined),
+                border: OutlineInputBorder(),
+              ),
+              items: _taskStatuses
+                  .map(
+                    (status) =>
+                        DropdownMenuItem(value: status, child: Text(status)),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) setState(() => taskStatus = value);
+              },
+            ),
+            const SizedBox(height: 16),
+            TextField(
               controller: dateController,
               readOnly: true,
               onTap: pickDate,
@@ -502,9 +649,92 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             TextField(
               controller: volunteersController,
               keyboardType: TextInputType.number,
+              maxLength: 6,
               decoration: const InputDecoration(
-                labelText: 'Volunteers Required (optional)',
+                labelText: 'Volunteer capacity',
                 prefixIcon: Icon(Icons.groups),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: compensationType,
+              decoration: const InputDecoration(
+                labelText: 'Compensation',
+                prefixIcon: Icon(Icons.payments_outlined),
+                border: OutlineInputBorder(),
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: 'unpaid',
+                  child: Text('Volunteer — unpaid'),
+                ),
+                DropdownMenuItem(value: 'fixed', child: Text('Fixed stipend')),
+                DropdownMenuItem(value: 'hourly', child: Text('Hourly rate')),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() {
+                  compensationType = value;
+                  if (value == 'unpaid') compensationAmountController.clear();
+                });
+              },
+            ),
+            if (compensationType != 'unpaid') ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      controller: compensationAmountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: compensationType == 'fixed'
+                            ? 'Stipend amount'
+                            : 'Hourly amount',
+                        prefixIcon: const Icon(Icons.currency_rupee),
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: compensationCurrencyController,
+                      textCapitalization: TextCapitalization.characters,
+                      maxLength: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Currency',
+                        counterText: '',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: compensationTermsController,
+                maxLength: 2000,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Compensation terms (optional)',
+                  prefixIcon: Icon(Icons.receipt_long_outlined),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            TextField(
+              controller: requirementsController,
+              maxLength: 2000,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Additional requirements (optional)',
+                prefixIcon: Icon(Icons.checklist_outlined),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -516,7 +746,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 onPressed: isLoading ? null : createTask,
                 child: isLoading
                     ? const CircularProgressIndicator()
-                    : const Text('CREATE TASK'),
+                    : Text(widget.task == null ? 'CREATE TASK' : 'SAVE TASK'),
               ),
             ),
           ],

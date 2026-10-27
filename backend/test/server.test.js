@@ -19,6 +19,7 @@ let baseUrl;
 const request = async (pathname, { method = 'GET', body, token } = {}) => {
   const response = await fetch(`${baseUrl}${pathname}`, {
     method,
+    signal: AbortSignal.timeout(5000),
     headers: {
       ...(body ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -100,7 +101,7 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
     ),
   );
   assert.equal(foreignKeys, 1);
-  assert.equal(schemaVersion, 2);
+  assert.equal(schemaVersion, 4);
   const migratedPassword = await new Promise((resolve, reject) =>
     schema.get(
       'SELECT password FROM users WHERE email = ?',
@@ -142,7 +143,26 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
   });
   assert.equal(invalidRole.status, 400);
 
-  // Registration with role: Head Volunteer (starts with role: Volunteer, pending approval)
+  const headRegistration = await request('/api/register', {
+    method: 'POST',
+    body: {
+      name: 'Self-activated Head',
+      email: 'self-head@example.test',
+      student_id: 'HEAD-SELF-1',
+      password: 'head-password',
+      role: 'Head Volunteer',
+    },
+  });
+  assert.equal(headRegistration.status, 201);
+  assert.equal(headRegistration.body.role, 'Head Volunteer');
+  assert.equal(headRegistration.body.role_status, 'approved');
+  const selfHeadLogin = await request('/api/login', {
+    method: 'POST',
+    body: { email: 'self-head@example.test', password: 'head-password' },
+  });
+  assert.equal(selfHeadLogin.status, 200);
+  assert.equal(selfHeadLogin.body.user.role, 'Head Volunteer');
+
   const registration = await request('/api/register', {
     method: 'POST',
     body: {
@@ -150,13 +170,13 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
       email: ' Volunteer@Example.Test ',
       student_id: 'VOL-1',
       password: 'volunteer-password',
-      role: 'Head Volunteer',
+      role: 'Volunteer',
     },
   });
   assert.equal(registration.status, 201);
   assert.equal(registration.body.role, 'Volunteer');
-  assert.equal(registration.body.role_requested, 'Head Volunteer');
-  assert.equal(registration.body.role_status, 'pending');
+  assert.equal(registration.body.role_requested, 'Volunteer');
+  assert.equal(registration.body.role_status, 'approved');
 
   const duplicate = await request('/api/register', {
     method: 'POST',
@@ -237,10 +257,70 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
       date: '2030-06-01',
       location: 'Community Hall',
       description: 'Created during the isolated test',
+      status: 'published',
+      category: 'Community',
+      start_time: '09:00:00',
+      end_time: '12:00:00',
+      area: 'Downtown',
+      volunteers_needed: 1,
     },
   });
   assert.equal(eventResponse.status, 201);
   const eventId = eventResponse.body.eventId;
+
+  const nearDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  const tooSoon = await request('/api/events', {
+    method: 'POST',
+    token: headToken,
+    body: {
+      name: 'Last-minute event',
+      date: nearDate,
+      start_time: '09:00:00',
+      end_time: '11:00:00',
+      location: 'Community Hall',
+      status: 'published',
+    },
+  });
+  assert.equal(tooSoon.status, 400);
+  assert.match(tooSoon.body.message, /5 full days/);
+
+  const draft = await request('/api/events', {
+    method: 'POST',
+    token: headToken,
+    body: {
+      name: 'Deadline draft',
+      date: nearDate,
+      location: 'Community Hall',
+      status: 'draft',
+    },
+  });
+  assert.equal(draft.status, 201);
+  const earlyPublish = await request(`/api/events/${draft.body.eventId}/publish`, {
+    method: 'PUT',
+    token: headToken,
+  });
+  assert.equal(earlyPublish.status, 400);
+  const laterDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  const rescheduledDraft = await request(`/api/events/${draft.body.eventId}`, {
+    method: 'PUT',
+    token: headToken,
+    body: {
+      date: laterDate,
+      start_time: '09:00:00',
+      end_time: '11:00:00',
+      status: 'draft',
+    },
+  });
+  assert.equal(rescheduledDraft.status, 200);
+  const publishDraft = await request(`/api/events/${draft.body.eventId}/publish`, {
+    method: 'PUT',
+    token: headToken,
+  });
+  assert.equal(publishDraft.status, 200);
 
   const invalidTask = await request('/api/tasks', {
     method: 'POST',
@@ -256,24 +336,83 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
   });
   assert.equal(invalidTask.status, 400);
 
+  const invalidCompensationTask = await request('/api/tasks', {
+    method: 'POST',
+    token: headToken,
+    body: {
+      event_id: eventId,
+      task_name: 'Invalid compensation',
+      description: 'Support attendees at the entrance.',
+      date: '2030-06-01',
+      start_time: '09:00:00',
+      end_time: '11:00:00',
+      location: 'Main entrance',
+      volunteers_required: 2,
+      compensation_type: 'unpaid',
+      compensation_amount: 100,
+    },
+  });
+  assert.equal(invalidCompensationTask.status, 400);
+
   const taskResponse = await request('/api/tasks', {
     method: 'POST',
     token: headToken,
     body: {
       event_id: eventId,
       task_name: 'Welcome desk',
+      description: 'Welcome attendees and guide them to registration.',
       date: '2030-06-01',
       start_time: '09:00:00',
       end_time: '11:00:00',
       location: 'Main entrance',
       volunteers_required: 1,
+      compensation_type: 'fixed',
+      compensation_amount: 750,
+      compensation_currency: 'INR',
+      compensation_terms: 'Paid after the event concludes.',
+      additional_requirements: 'Comfortable speaking with attendees.',
     },
   });
   assert.equal(taskResponse.status, 201);
   const taskId = taskResponse.body.taskId;
+  const eventTasks = await request(`/api/events/${eventId}/tasks`, {
+    token: volunteerToken,
+  });
+  assert.equal(eventTasks.status, 200);
+  assert.equal(eventTasks.body[0].remaining_places, 1);
+  assert.equal(eventTasks.body[0].compensation_type, 'fixed');
+  assert.equal(Number(eventTasks.body[0].compensation_amount), 750);
+  assert.equal(
+    eventTasks.body[0].additional_requirements,
+    'Comfortable speaking with attendees.',
+  );
   const eventList = await request('/api/events');
   assert.equal(eventList.status, 200);
   assert.ok(eventList.body.some((event) => event.id === eventId));
+  assert.ok(eventList.body.every((event) => event.status === 'published'));
+
+  const areaEvents = await request('/api/events?area=Downtown&category=community&available=true');
+  assert.equal(areaEvents.status, 200);
+  assert.ok(areaEvents.body.some((event) => event.id === eventId));
+
+  const eventRegistration = await request(`/api/events/${eventId}/register`, {
+    method: 'POST',
+    token: volunteerToken,
+    body: { selected_location: 'North entrance' },
+  });
+  assert.equal(eventRegistration.status, 201);
+  const duplicateEventRegistration = await request(`/api/events/${eventId}/register`, {
+    method: 'POST',
+    token: volunteerToken,
+    body: { selected_location: 'North entrance' },
+  });
+  assert.equal(duplicateEventRegistration.status, 409);
+  const notifications = await request('/api/notifications', { token: volunteerToken });
+  assert.ok(notifications.body.some((notification) => notification.type === 'registration_confirmed'));
+  const registrations = await request(`/api/users/${volunteerId}/events`, { token: volunteerToken });
+  assert.equal(registrations.status, 200);
+  assert.equal(registrations.body[0].selected_location, 'North entrance');
+  assert.equal(registrations.body[0].head_volunteer_name, 'Head Volunteer');
 
   const enrollment = await request('/api/enroll', {
     method: 'POST',
@@ -281,6 +420,16 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
     body: { user_id: volunteerId, task_id: taskId },
   });
   assert.equal(enrollment.status, 201);
+  const headTaskNotifications = await request('/api/notifications', {
+    token: headToken,
+  });
+  assert.ok(
+    headTaskNotifications.body.some(
+      (notification) =>
+        notification.type === 'task_enrollment_request' &&
+        notification.event_id === eventId,
+    ),
+  );
 
   const duplicateEnrollment = await request('/api/enroll', {
     method: 'POST',
@@ -320,6 +469,13 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
   });
   assert.equal(secondLogin.status, 200);
 
+  const fullEventRegistration = await request(`/api/events/${eventId}/register`, {
+    method: 'POST',
+    token: secondLogin.body.token,
+    body: { selected_location: 'South entrance' },
+  });
+  assert.equal(fullEventRegistration.status, 409);
+
   const fullTask = await request('/api/enroll', {
     method: 'POST',
     token: secondLogin.body.token,
@@ -333,10 +489,12 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
     body: {
       event_id: eventId,
       task_name: 'Concurrent enrollment task',
+      description: 'Manage participant check-ins and event questions.',
       date: '2030-06-01',
       start_time: '12:00:00',
       end_time: '13:00:00',
       location: 'Main entrance',
+      volunteers_required: 1,
     },
   });
   assert.equal(concurrentTaskResponse.status, 201);
@@ -344,7 +502,7 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
   const concurrentEnrollments = await Promise.all([
     request('/api/enroll', {
       method: 'POST',
-      token: secondLogin.body.token,
+      token: volunteerToken,
       body: { task_id: concurrentTaskId },
     }),
     request('/api/enroll', {
@@ -357,6 +515,15 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
     concurrentEnrollments.map((response) => response.status).sort(),
     [201, 409],
   );
+  const capacityAfterConcurrentRequests = await request(
+    `/api/events/${eventId}/tasks`,
+    { token: headToken },
+  );
+  const concurrentTask = capacityAfterConcurrentRequests.body.find(
+    (task) => task.id === concurrentTaskId,
+  );
+  assert.equal(concurrentTask.pending_count, 1);
+  assert.equal(concurrentTask.remaining_places, 0);
 
   const impersonation = await request('/api/enroll', {
     method: 'POST',
@@ -411,13 +578,14 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
       error ? reject(error) : resolve(row.user_version),
     ),
   );
-  assert.equal(migratedVersion, 2);
+  assert.equal(migratedVersion, 4);
   const persistedTasks = await request(`/api/users/${volunteerId}/tasks`, {
     token: volunteerToken,
   });
   assert.equal(persistedTasks.status, 200);
   assert.equal(persistedTasks.body[0].task_name, 'Welcome desk');
   assert.equal(persistedTasks.body[0].status, 'pending');
+  assert.equal(persistedTasks.body[0].head_volunteer_email, 'head@example.test');
   const persistedAnnouncements = await request('/api/announcements');
   assert.ok(
     persistedAnnouncements.body.some((item) => item.title === 'Welcome'),
@@ -459,29 +627,22 @@ test('SQLite persistence, authentication, permissions, and event workflows', asy
   });
   assert.equal(blockedRoleRequests.status, 403);
 
-  // Authorized Head Volunteer lists role requests
+  // Head Volunteers no longer approve other Head Volunteer accounts.
   const headRoleRequests = await request('/api/role-requests', {
     token: headToken,
   });
-  assert.equal(headRoleRequests.status, 200);
-  assert.ok(headRoleRequests.body.some((u) => u.id === volunteerId && u.role_status === 'pending'));
-
-  // Authorized Head Volunteer approves the Head Volunteer role request
   const approvalResponse = await request(`/api/role-requests/${volunteerId}`, {
     method: 'PUT',
     token: headToken,
     body: { action: 'approve' },
   });
-  assert.equal(approvalResponse.status, 200);
-  assert.equal(approvalResponse.body.role, 'Head Volunteer');
-  assert.equal(approvalResponse.body.role_status, 'approved');
-
-  // Verify approved user now has Head Volunteer role upon login
+  assert.equal(headRoleRequests.status, 403);
+  assert.equal(approvalResponse.status, 403);
   const postApprovalLogin = await request('/api/login', {
     method: 'POST',
     body: { email: 'volunteer@example.test', password: 'volunteer-password' },
   });
   assert.equal(postApprovalLogin.status, 200);
-  assert.equal(postApprovalLogin.body.user.role, 'Head Volunteer');
+  assert.equal(postApprovalLogin.body.user.role, 'Volunteer');
   assert.equal(postApprovalLogin.body.user.role_status, 'approved');
 });

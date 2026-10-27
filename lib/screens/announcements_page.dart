@@ -167,6 +167,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
               else
                 ...announcements.map((a) {
                   return Card(
+                    color: AppColors.pastelFor(a['id']),
                     margin: const EdgeInsets.only(bottom: 15),
                     child: Padding(
                       padding: const EdgeInsets.all(16),

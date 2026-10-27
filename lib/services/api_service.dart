@@ -131,7 +131,7 @@ class ApiService {
       throw ApiException(
         message.isNotEmpty
             ? message
-            : 'Access denied. Head Volunteer privileges require administrator approval.',
+            : 'Access denied. Administrator privileges are required.',
         statusCode: 403,
         type: 'forbidden',
       );
@@ -142,6 +142,14 @@ class ApiService {
             : 'Please check your information and try again.',
         statusCode: 400,
         type: 'validation',
+      );
+    } else if (response.statusCode == 404) {
+      throw ApiException(
+        message.isNotEmpty
+            ? message
+            : 'The requested event or task was not found. Refresh and try again.',
+        statusCode: 404,
+        type: 'not_found',
       );
     } else if (response.statusCode >= 500) {
       throw ApiException(
@@ -252,10 +260,25 @@ class ApiService {
   // GET ALL EVENTS (WITH SQLITE CACHE)
   // ===============================
 
-  static Future<List<dynamic>> getEvents() async {
+  static Future<List<dynamic>> getEvents({
+    String? area,
+    String? category,
+    String? date,
+    bool availableOnly = false,
+  }) async {
+    final query = <String, String>{
+      if (area != null && area.trim().isNotEmpty) 'area': area.trim(),
+      if (category != null && category.trim().isNotEmpty)
+        'category': category.trim(),
+      if (date != null && date.isNotEmpty) 'date': date,
+      if (availableOnly) 'available': 'true',
+    };
+    final eventsUri = uri(
+      '/api/events',
+    ).replace(queryParameters: query.isEmpty ? null : query);
     try {
       final response = await _send(
-        () => http.get(uri('/api/events'), headers: _headers),
+        () => http.get(eventsUri, headers: _headers),
       );
 
       if (response.statusCode == 200) {
@@ -273,18 +296,51 @@ class ApiService {
         statusCode: response.statusCode,
       );
     } catch (e) {
+      if (e is! ApiException || !['network', 'timeout'].contains(e.type)) {
+        rethrow;
+      }
       final cached = await LocalDatabaseService.instance.getCachedEvents();
 
       if (cached.isNotEmpty) {
         debugPrint(
           '[ApiService] Serving ${cached.length} events from SQLite cache.',
         );
-
-        return cached;
+        return cached
+            .where((event) {
+              final eventArea = (event['area'] ?? event['location'] ?? '')
+                  .toString()
+                  .toLowerCase();
+              final eventCategory = (event['category'] ?? '')
+                  .toString()
+                  .toLowerCase();
+              final eventDate = event['date']?.toString().split(' ').first;
+              return (area == null ||
+                      area.trim().isEmpty ||
+                      eventArea.contains(area.trim().toLowerCase())) &&
+                  (category == null ||
+                      category.trim().isEmpty ||
+                      eventCategory == category.trim().toLowerCase()) &&
+                  (date == null || date.isEmpty || eventDate == date) &&
+                  (!availableOnly ||
+                      event['available_slots'] == null ||
+                      (event['available_slots'] as num).toInt() > 0);
+            })
+            .map((event) => {...event, '_is_cached': true})
+            .toList();
       }
 
       rethrow;
     }
+  }
+
+  static Future<List<dynamic>> getManagedEvents() async {
+    final response = await _send(
+      () => http.get(uri('/api/head/events'), headers: _headers),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    throw ApiException('Failed to load your managed events');
   }
 
   // ===============================
@@ -297,6 +353,19 @@ class ApiService {
     required String location,
     String description = '',
     int? volunteersNeeded,
+    String status = 'draft',
+    String category = '',
+    String startTime = '',
+    String endTime = '',
+    String area = '',
+    String address = '',
+    String requiredRoles = '',
+    String meetingPoint = '',
+    String reportingInstructions = '',
+    String instructions = '',
+    String contactPhone = '',
+    String imageUrl = '',
+    String registrationDeadline = '',
   }) async {
     final response = await _send(
       () => http.post(
@@ -308,11 +377,112 @@ class ApiService {
           'location': location.trim(),
           'description': description.trim(),
           'volunteers_needed': volunteersNeeded,
+          'status': status,
+          'category': category.trim(),
+          'start_time': startTime.trim(),
+          'end_time': endTime.trim(),
+          'area': area.trim(),
+          'address': address.trim(),
+          'required_roles': requiredRoles.trim(),
+          'meeting_point': meetingPoint.trim(),
+          'reporting_instructions': reportingInstructions.trim(),
+          'instructions': instructions.trim(),
+          'contact_phone': contactPhone.trim(),
+          'image_url': imageUrl.trim(),
+          'registration_deadline': registrationDeadline.trim(),
         }),
       ),
     );
 
     return _parseJsonResponse(response);
+  }
+
+  static Future<Map<String, dynamic>> updateEvent({
+    required int eventId,
+    required Map<String, dynamic> details,
+  }) async {
+    final response = await _send(
+      () => http.put(
+        uri('/api/events/$eventId'),
+        headers: _headers,
+        body: jsonEncode(details),
+      ),
+    );
+    return _parseJsonResponse(response);
+  }
+
+  static Future<Map<String, dynamic>> getEventDetails(int eventId) async {
+    final response = await _send(
+      () => http.get(uri('/api/events/$eventId'), headers: _headers),
+    );
+    return _parseJsonResponse(response);
+  }
+
+  static Future<Map<String, dynamic>> publishEvent(int eventId) async {
+    final response = await _send(
+      () => http.put(
+        uri('/api/events/$eventId/publish'),
+        headers: _headers,
+        body: jsonEncode({}),
+      ),
+    );
+    return _parseJsonResponse(response);
+  }
+
+  static Future<Map<String, dynamic>> cancelEvent(int eventId) async {
+    final response = await _send(
+      () => http.put(
+        uri('/api/events/$eventId/cancel'),
+        headers: _headers,
+        body: jsonEncode({}),
+      ),
+    );
+    return _parseJsonResponse(response);
+  }
+
+  static Future<Map<String, dynamic>> registerForEvent({
+    required int eventId,
+    required String selectedLocation,
+  }) async {
+    final response = await _send(
+      () => http.post(
+        uri('/api/events/$eventId/register'),
+        headers: _headers,
+        body: jsonEncode({'selected_location': selectedLocation.trim()}),
+      ),
+    );
+    return _parseJsonResponse(response);
+  }
+
+  static Future<List<dynamic>> getUserEvents(int userId) async {
+    final response = await _send(
+      () => http.get(uri('/api/users/$userId/events'), headers: _headers),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    throw ApiException('Failed to load your event registrations');
+  }
+
+  static Future<List<dynamic>> getNotifications() async {
+    final response = await _send(
+      () => http.get(uri('/api/notifications'), headers: _headers),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    throw ApiException('Failed to load notifications');
+  }
+
+  static Future<void> markNotificationRead(int notificationId) async {
+    final response = await _send(
+      () => http.put(
+        uri('/api/notifications/$notificationId/read'),
+        headers: _headers,
+        body: jsonEncode({}),
+      ),
+    );
+    _parseJsonResponse(response);
   }
 
   // ===============================
@@ -340,6 +510,9 @@ class ApiService {
         statusCode: response.statusCode,
       );
     } catch (e) {
+      if (e is! ApiException || !['network', 'timeout'].contains(e.type)) {
+        rethrow;
+      }
       final cached = await LocalDatabaseService.instance.getCachedTasks(
         eventId,
       );
@@ -349,7 +522,7 @@ class ApiService {
           '[ApiService] Serving ${cached.length} tasks from SQLite cache.',
         );
 
-        return cached;
+        return cached.map((task) => {...task, '_is_cached': true}).toList();
       }
 
       rethrow;
@@ -368,7 +541,14 @@ class ApiService {
     required String endTime,
     required String location,
     String instructions = '',
+    String description = '',
     int? volunteersRequired,
+    String status = 'Open',
+    String compensationType = 'unpaid',
+    double? compensationAmount,
+    String compensationCurrency = 'INR',
+    String compensationTerms = '',
+    String additionalRequirements = '',
   }) async {
     final response = await _send(
       () => http.post(
@@ -382,7 +562,14 @@ class ApiService {
           'end_time': endTime.trim(),
           'location': location.trim(),
           'instructions': instructions.trim(),
+          'description': description.trim(),
           'volunteers_required': volunteersRequired,
+          'status': status,
+          'compensation_type': compensationType,
+          'compensation_amount': compensationAmount,
+          'compensation_currency': compensationCurrency,
+          'compensation_terms': compensationTerms.trim(),
+          'additional_requirements': additionalRequirements.trim(),
         }),
       ),
     );
@@ -390,16 +577,30 @@ class ApiService {
     return _parseJsonResponse(response);
   }
 
+  static Future<Map<String, dynamic>> updateTask({
+    required int taskId,
+    required Map<String, dynamic> details,
+  }) async {
+    final response = await _send(
+      () => http.put(
+        uri('/api/tasks/$taskId'),
+        headers: _headers,
+        body: jsonEncode(details),
+      ),
+    );
+    return _parseJsonResponse(response);
+  }
+
   // ===============================
   // ENROLL IN A TASK
   // ===============================
 
-  static Future<Map<String, dynamic>> enroll(int userId, int taskId) async {
+  static Future<Map<String, dynamic>> enroll(int taskId) async {
     final response = await _send(
       () => http.post(
         uri('/api/enroll'),
         headers: _headers,
-        body: jsonEncode({'user_id': userId, 'task_id': taskId}),
+        body: jsonEncode({'task_id': taskId}),
       ),
     );
 
@@ -433,12 +634,19 @@ class ApiService {
     required int userId,
     required String name,
     required String studentId,
+    String phone = '',
+    String area = '',
   }) async {
     final response = await _send(
       () => http.put(
         uri('/api/users/$userId/profile'),
         headers: _headers,
-        body: jsonEncode({'name': name.trim(), 'student_id': studentId.trim()}),
+        body: jsonEncode({
+          'name': name.trim(),
+          'student_id': studentId.trim(),
+          'phone': phone.trim(),
+          'area': area.trim(),
+        }),
       ),
     );
 

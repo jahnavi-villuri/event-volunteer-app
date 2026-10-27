@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../utils/formats.dart';
 import '../widgets/event_artwork.dart';
 import '../widgets/load_error_state.dart';
+import 'create_event_screen.dart';
 import 'create_task_screen.dart';
 import 'volunteer_requests_screen.dart';
 
@@ -32,7 +33,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     });
 
     try {
-      final data = await ApiService.getEvents();
+      final data = await ApiService.getManagedEvents();
 
       if (!mounted) return;
 
@@ -89,6 +90,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
             else
               ...events.map((event) {
                 return Card(
+                  color: AppColors.pastelFor(event['id']),
                   margin: const EdgeInsets.only(bottom: 15),
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(16),
@@ -109,7 +111,26 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                       '${formatDate(event['date'])}\n${event['location'] ?? ''}',
                     ),
                     isThreeLine: true,
-                    trailing: const Icon(Icons.arrow_forward_ios),
+                    trailing: PopupMenuButton<String>(
+                      tooltip: 'Event actions',
+                      onSelected: (action) => _handleEventAction(action, event),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Text('Edit event'),
+                        ),
+                        if (event['status'] == 'draft')
+                          const PopupMenuItem(
+                            value: 'publish',
+                            child: Text('Publish event'),
+                          ),
+                        if (event['status'] == 'published')
+                          const PopupMenuItem(
+                            value: 'cancel',
+                            child: Text('Cancel event'),
+                          ),
+                      ],
+                    ),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -130,6 +151,68 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleEventAction(
+    String action,
+    Map<String, dynamic> event,
+  ) async {
+    final eventId = (event['id'] as num).toInt();
+    try {
+      if (action == 'edit') {
+        final updated = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CreateEventScreen(event: event),
+          ),
+        );
+        if (updated == true) await loadEvents();
+        return;
+      }
+      if (action == 'publish') {
+        await ApiService.publishEvent(eventId);
+      } else if (action == 'cancel') {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Cancel this event?'),
+            content: const Text(
+              'Registered volunteers will be notified and all open tasks will be cancelled.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Keep event'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Cancel event'),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true) return;
+        await ApiService.cancelEvent(eventId);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            action == 'publish'
+                ? 'Event published'
+                : 'Event cancelled and volunteers notified',
+          ),
+        ),
+      );
+      await loadEvents();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    }
   }
 }
 
@@ -271,6 +354,7 @@ class _ManageEventTasksScreenState extends State<ManageEventTasksScreen> {
                       ),
                     ),
                     child: Card(
+                      color: AppColors.pastelFor(task['id']),
                       margin: const EdgeInsets.only(bottom: 15),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -284,7 +368,22 @@ class _ManageEventTasksScreenState extends State<ManageEventTasksScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                onPressed: () => _editTask(task),
+                                icon: const Icon(Icons.edit_outlined),
+                                label: const Text('Edit task'),
+                              ),
+                            ),
                             const SizedBox(height: 8),
+                            Text(
+                              'Status: ${task['status'] ?? 'Open'}',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             Text(
                               '${formatDate(task['date'])}  ·  '
                               '${formatTime(task['start_time'])} - '
@@ -337,5 +436,21 @@ class _ManageEventTasksScreenState extends State<ManageEventTasksScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _editTask(Map<String, dynamic> task) async {
+    final updated = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateTaskScreen(
+          eventId: widget.eventId,
+          eventName: widget.eventName,
+          eventDate: widget.eventDate,
+          eventLocation: widget.eventLocation,
+          task: task,
+        ),
+      ),
+    );
+    if (updated == true && mounted) await loadTasks();
   }
 }

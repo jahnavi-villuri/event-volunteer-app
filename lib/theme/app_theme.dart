@@ -7,19 +7,39 @@ class AppColors {
   static const primary = Color(0xFF102A43);
   static const primaryDark = Color(0xFF0B1F33);
   static const accent = Color(0xFF2E7DD1);
-  static const accentSoft = Color(0xFFEAF4FF);
+  static const accentSoft = Color(0xFFBFDCE6);
   static const success = Color(0xFF1E7F62);
   static const danger = Color(0xFFD14B5B);
-  static const background = Color(0xFFF3F7FB);
-  static const surface = Color(0xFFFFFFFF);
-  static const surfaceSubtle = Color(0xFFF8FAFC);
+  static const background = Color(0xFFD3E4E7);
+  static const surface = Color(0xFFE4EFEF);
+  static const surfaceSubtle = Color(0xFFD9E8EA);
   static const textPrimary = Color(0xFF122033);
-  static const textSecondary = Color(0xFF596B7E);
-  static const textMuted = Color(0xFF8295A9);
-  static const border = Color(0xFFDAE5F2);
+  static const textSecondary = Color(0xFF455A6B);
+  static const textMuted = Color(0xFF627789);
+  static const border = Color(0xFFB2CBD1);
   static const borderFocus = Color(0xFF2E7DD1);
-  static const lavender = Color(0xFFE9F1FF);
-  static const warm = Color(0xFFF6B26B);
+  static const lavender = Color(0xFFCCDAF0);
+  static const warm = Color(0xFFF2A65A);
+  static const teal = Color(0xFF1F7A7A);
+  static const tealDeep = Color(0xFF14505A);
+  static const sunset = Color(0xFFE08A5B);
+  static const plum = Color(0xFF5B4B8A);
+
+  /// Soft card tints (mint, peach, lavender, rose, butter, sky).
+  static const pastels = [
+    Color(0xFFCDE9DC),
+    Color(0xFFF4D8C3),
+    Color(0xFFD9D3F2),
+    Color(0xFFF3CDD6),
+    Color(0xFFF2E6B5),
+    Color(0xFFC8DFF3),
+  ];
+
+  static Color pastelAt(int index) => pastels[index.abs() % pastels.length];
+
+  /// Stable pastel for an id or name, so a card keeps its colour.
+  static Color pastelFor(Object? key) =>
+      pastelAt(key is num ? key.toInt() : (key?.toString().hashCode ?? 0));
 }
 
 class AppSpacing {
@@ -84,7 +104,7 @@ class AppTheme {
       pageTransitionsTheme: PageTransitionsTheme(
         builders: {
           for (final platform in TargetPlatform.values)
-            platform: const FadeUpwardsPageTransitionsBuilder(),
+            platform: const FadeForwardsPageTransitionsBuilder(),
         },
       ),
       colorScheme: ColorScheme.fromSeed(

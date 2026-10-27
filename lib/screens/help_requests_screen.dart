@@ -100,7 +100,11 @@ class _HelpRequestsScreenState extends State<HelpRequestsScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFE9EEFF), Color(0xFFF5F3FF), Color(0xFFF8F7FC)],
+            colors: [
+              AppColors.accentSoft,
+              AppColors.background,
+              AppColors.lavender,
+            ],
           ),
         ),
         child: SafeArea(
@@ -157,6 +161,7 @@ class _HelpRequestsScreenState extends State<HelpRequestsScreen> {
                     final isProcessing = processingId == requestId;
 
                     return Card(
+                      color: AppColors.pastelFor(requestId),
                       margin: const EdgeInsets.only(bottom: 15),
                       child: Padding(
                         padding: const EdgeInsets.all(18),

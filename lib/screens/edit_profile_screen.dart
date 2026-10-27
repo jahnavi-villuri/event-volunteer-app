@@ -5,12 +5,16 @@ class EditProfileScreen extends StatefulWidget {
   final int userId;
   final String name;
   final String studentId;
+  final String phone;
+  final String area;
 
   const EditProfileScreen({
     super.key,
     required this.userId,
     required this.name,
     required this.studentId,
+    this.phone = '',
+    this.area = '',
   });
 
   @override
@@ -21,6 +25,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _studentIdController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _areaController;
   bool _isSaving = false;
 
   @override
@@ -28,6 +34,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.name);
     _studentIdController = TextEditingController(text: widget.studentId);
+    _phoneController = TextEditingController(text: widget.phone);
+    _areaController = TextEditingController(text: widget.area);
   }
 
   Future<void> _save() async {
@@ -38,6 +46,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         userId: widget.userId,
         name: _nameController.text.trim(),
         studentId: _studentIdController.text.trim(),
+        phone: _phoneController.text.trim(),
+        area: _areaController.text.trim(),
       ).timeout(const Duration(seconds: 10));
       if (!mounted) return;
       Navigator.pop(context, updated);
@@ -57,6 +67,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _studentIdController.dispose();
+    _phoneController.dispose();
+    _areaController.dispose();
     super.dispose();
   }
 
@@ -94,6 +106,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               validator: (value) => value == null || value.trim().isEmpty
                   ? 'Enter your student ID'
                   : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              maxLength: 40,
+              decoration: const InputDecoration(
+                labelText: 'Phone number',
+                prefixIcon: Icon(Icons.phone_outlined),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _areaController,
+              textCapitalization: TextCapitalization.words,
+              maxLength: 120,
+              decoration: const InputDecoration(
+                labelText: 'Area or neighborhood',
+                prefixIcon: Icon(Icons.location_on_outlined),
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 12),
             FilledButton(

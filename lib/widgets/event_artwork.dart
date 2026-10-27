@@ -20,7 +20,14 @@ class EventArtwork extends StatelessWidget {
     if (suppliedUrl != null && suppliedUrl.isNotEmpty) return suppliedUrl;
 
     final name = eventName.toLowerCase();
-    if (name.contains('sport') || name.contains('game') || name.contains('run')) {
+    if (name.contains('clean') ||
+        name.contains('green') ||
+        name.contains('plant')) {
+      return 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=1200&q=85';
+    }
+    if (name.contains('sport') ||
+        name.contains('game') ||
+        name.contains('run')) {
       return 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=85';
     }
     if (name.contains('tech') ||
@@ -28,18 +35,24 @@ class EventArtwork extends StatelessWidget {
         name.contains('conference')) {
       return 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=85';
     }
-    if (name.contains('cultur') || name.contains('music') || name.contains('fest')) {
+    if (name.contains('cultur') ||
+        name.contains('music') ||
+        name.contains('fest')) {
       return 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=85';
     }
-    return 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=1200&q=85';
+    return 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1200&q=85';
   }
 
   IconData get _fallbackIcon {
     final name = eventName.toLowerCase();
-    if (name.contains('sport') || name.contains('game') || name.contains('run')) {
+    if (name.contains('sport') ||
+        name.contains('game') ||
+        name.contains('run')) {
       return Icons.sports_soccer;
     }
-    if (name.contains('cultur') || name.contains('music') || name.contains('fest')) {
+    if (name.contains('cultur') ||
+        name.contains('music') ||
+        name.contains('fest')) {
       return Icons.celebration;
     }
     if (name.contains('tech') || name.contains('science')) {

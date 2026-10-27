@@ -13,6 +13,8 @@ import 'utils/formats.dart';
 import 'theme/app_theme.dart';
 import 'widgets/event_artwork.dart';
 import 'widgets/load_error_state.dart';
+import 'widgets/motion.dart';
+import 'widgets/splash_card.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,25 +78,54 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(25),
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.6, end: 1),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.elasticOut,
+              builder: (context, scale, child) => Opacity(
+                opacity: scale.clamp(0.0, 1.0),
+                child: Transform.scale(scale: scale, child: child),
               ),
-              child: const Icon(
-                Icons.volunteer_activism,
-                color: Colors.white,
-                size: 50,
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.teal, AppColors.tealDeep],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.tealDeep.withValues(alpha: 0.35),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.volunteer_activism,
+                  color: Colors.white,
+                  size: 50,
+                ),
               ),
             ),
             const SizedBox(height: 20),
-            const Text('Volunteer Connect', style: AppTextStyles.pageHeading),
+            const FadeSlideIn(
+              index: 2,
+              child: Text(
+                'Volunteer Connect',
+                style: AppTextStyles.pageHeading,
+              ),
+            ),
             const SizedBox(height: 8),
-            const Text(
-              'Volunteer smarter. Work together.',
-              style: AppTextStyles.pageSubtitle,
+            const FadeSlideIn(
+              index: 4,
+              child: Text(
+                'Volunteer smarter. Work together.',
+                style: AppTextStyles.pageSubtitle,
+              ),
             ),
           ],
         ),
@@ -121,7 +152,7 @@ class WelcomeScreen extends StatelessWidget {
             colors: [
               AppColors.primaryDark,
               AppColors.primary,
-              Color(0xFFEEF5FF),
+              AppColors.accentSoft,
             ],
           ),
         ),
@@ -186,7 +217,7 @@ class WelcomeScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.97),
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(28),
                   ),
                   child: Column(
@@ -514,6 +545,14 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             const SizedBox(height: 30),
+
+            const EventArtwork(
+              eventName: 'Community Volunteer Event',
+              height: 190,
+              borderRadius: BorderRadius.all(Radius.circular(22)),
+            ),
+
+            const SizedBox(height: 22),
 
             const Icon(Icons.lock_outline, size: 70, color: AppColors.primary),
 
@@ -1076,12 +1115,10 @@ class _SignupScreenState extends State<SignupScreen> {
               title: 'Head Volunteer',
               subtitle: 'Coordinate volunteers & events',
               icon: Icons.supervisor_account_outlined,
-              badgeText: 'Approval Required',
               bulletPoints: const [
                 'Coordinate volunteer activities and view volunteer lists.',
                 'Create and manage events, tasks, and announcements.',
                 'Assist with attendance and respond to student help requests.',
-                'Requires organizer/administrator approval before activation.',
               ],
             ),
 
@@ -1307,81 +1344,48 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Hello, $name 👋', style: AppTextStyles.pageHeading),
+              FadeSlideIn(
+                child: Text(
+                  'Hello, $name 👋',
+                  style: AppTextStyles.pageHeading,
+                ),
+              ),
 
               const SizedBox(height: 6),
 
-              const Text(
-                'Ready to make a difference?',
-                style: AppTextStyles.pageSubtitle,
-              ),
-
-              if (Session.isHeadVolunteerPending) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    border: Border.all(
-                      color: const Color(0xFFF59E0B),
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.info_outline,
-                        color: Color(0xFFB45309),
-                        size: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Head Volunteer Request Pending',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF92400E),
-                                fontSize: 13,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Your request for Head Volunteer access is waiting for administrator approval. You can currently participate as a Volunteer.',
-                              style: TextStyle(
-                                color: Color(0xFF78350F),
-                                fontSize: 12,
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+              const FadeSlideIn(
+                index: 1,
+                child: Text(
+                  'Ready to make a difference?',
+                  style: AppTextStyles.pageSubtitle,
                 ),
-              ],
+              ),
 
               const SizedBox(height: 25),
 
               Row(
                 children: [
                   Expanded(
-                    child: _QuickActionCard(
-                      icon: Icons.event,
-                      title: 'View Events',
-                      onTap: () => widget.onNavigateToTab(1),
+                    child: FadeSlideIn(
+                      index: 2,
+                      child: _QuickActionCard(
+                        icon: Icons.event,
+                        tint: AppColors.pastelAt(5),
+                        title: 'View Events',
+                        onTap: () => widget.onNavigateToTab(1),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _QuickActionCard(
-                      icon: Icons.task_alt,
-                      title: 'My Tasks',
-                      onTap: () => widget.onNavigateToTab(2),
+                    child: FadeSlideIn(
+                      index: 3,
+                      child: _QuickActionCard(
+                        icon: Icons.task_alt,
+                        tint: AppColors.pastelAt(0),
+                        title: 'My Tasks',
+                        onTap: () => widget.onNavigateToTab(2),
+                      ),
                     ),
                   ),
                 ],
@@ -1392,32 +1396,52 @@ class _HomePageState extends State<HomePage> {
               Row(
                 children: [
                   Expanded(
-                    child: _QuickActionCard(
-                      icon: Icons.campaign,
-                      title: 'Announcements',
-                      onTap: () => widget.onNavigateToTab(3),
+                    child: FadeSlideIn(
+                      index: 4,
+                      child: _QuickActionCard(
+                        icon: Icons.campaign,
+                        tint: AppColors.pastelAt(1),
+                        title: 'Announcements',
+                        onTap: () => widget.onNavigateToTab(3),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _QuickActionCard(
-                      icon: Icons.support_agent,
-                      title: 'Contact Head Volunteer',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const ContactHeadVolunteerScreen(),
-                          ),
-                        );
-                      },
+                    child: FadeSlideIn(
+                      index: 5,
+                      child: _QuickActionCard(
+                        icon: Icons.support_agent,
+                        tint: AppColors.pastelAt(2),
+                        title: 'Contact Head Volunteer',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ContactHeadVolunteerScreen(),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 22),
+
+              const FadeSlideIn(
+                index: 6,
+                child: SplashCard(
+                  icon: Icons.volunteer_activism,
+                  title: 'Every hour counts',
+                  message:
+                      'Pick an event below and sign up for a task that suits you.',
+                ),
+              ),
+
+              const SizedBox(height: 10),
 
               const Text(
                 'Upcoming Events',
@@ -1444,16 +1468,22 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(color: AppColors.textSecondary),
                 )
               else
-                ...events.map((event) {
-                  return EventCard(
-                    eventId: (event['id'] as num).toInt(),
-                    eventName: event['name'] ?? 'Unnamed Event',
-                    date: _formatDate(event['date']),
-                    location: event['location'] ?? '',
-                    description: event['description'] ?? '',
-                    imageUrl: event['image_url']?.toString(),
-                    volunteersNeeded: (event['volunteers_needed'] as num?)
-                        ?.toInt(),
+                ...events.asMap().entries.map((entry) {
+                  final event = entry.value;
+                  return FadeSlideIn(
+                    index: entry.key,
+                    child: EventCard(
+                      eventId: (event['id'] as num).toInt(),
+                      eventName: event['name'] ?? 'Unnamed Event',
+                      date: _formatDate(event['date']),
+                      location: event['location'] ?? '',
+                      description: event['description'] ?? '',
+                      imageUrl: event['image_url']?.toString(),
+                      volunteersNeeded:
+                          (event['available_slots'] as num?)?.toInt() ??
+                          (event['volunteers_needed'] as num?)?.toInt(),
+                      isCached: event['_is_cached'] == true,
+                    ),
                   );
                 }),
             ],
@@ -1500,8 +1530,10 @@ class _QuickActionCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
+  final Color tint;
 
   const _QuickActionCard({
+    required this.tint,
     required this.icon,
     required this.title,
     required this.onTap,
@@ -1511,6 +1543,7 @@ class _QuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: EdgeInsets.zero,
+      color: tint,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
@@ -1522,7 +1555,7 @@ class _QuickActionCard extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: AppColors.accentSoft,
+                  color: Colors.white.withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: AppColors.primary, size: 22),
@@ -1550,6 +1583,26 @@ class _QuickActionCard extends StatelessWidget {
 // EVENTS PAGE
 // ============================================================
 
+const _eventsSplashCards = <SplashCard>[
+  SplashCard(
+    icon: Icons.groups,
+    title: 'Teamwork makes it happen',
+    message: 'Every event runs on volunteers like you.',
+    colors: SplashCard.sunsetVariant,
+  ),
+  SplashCard(
+    icon: Icons.emoji_events,
+    title: 'Make your mark',
+    message: 'Complete tasks and build your volunteering record.',
+    colors: SplashCard.plumVariant,
+  ),
+  SplashCard(
+    icon: Icons.favorite,
+    title: 'Small acts, big impact',
+    message: 'Join an event close to you this month.',
+  ),
+];
+
 class EventsPage extends StatefulWidget {
   const EventsPage({super.key});
 
@@ -1558,9 +1611,13 @@ class EventsPage extends StatefulWidget {
 }
 
 class _EventsPageState extends State<EventsPage> {
+  final areaController = TextEditingController();
+  final categoryController = TextEditingController();
   List<dynamic> events = [];
   bool isLoading = true;
   String? loadError;
+  DateTime? selectedDate;
+  bool availableOnly = false;
 
   @override
   void initState() {
@@ -1573,12 +1630,22 @@ class _EventsPageState extends State<EventsPage> {
   // ============================================================
 
   Future<void> loadEvents() async {
+    await _fetchEvents(applyFilters: true);
+  }
+
+  Future<void> _fetchEvents({required bool applyFilters}) async {
     setState(() {
       isLoading = true;
       loadError = null;
     });
     try {
-      final data = await ApiService.getEvents();
+      final date = selectedDate?.toIso8601String().substring(0, 10);
+      final data = await ApiService.getEvents(
+        area: applyFilters ? areaController.text : null,
+        category: applyFilters ? categoryController.text : null,
+        date: applyFilters ? date : null,
+        availableOnly: applyFilters && availableOnly,
+      );
 
       if (!mounted) return;
 
@@ -1598,6 +1665,34 @@ class _EventsPageState extends State<EventsPage> {
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to load events: $e')));
     }
+  }
+
+  Future<void> _selectDate() async {
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? now,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: DateTime(now.year + 5),
+    );
+    if (date != null && mounted) setState(() => selectedDate = date);
+  }
+
+  void _clearFilters() {
+    areaController.clear();
+    categoryController.clear();
+    setState(() {
+      selectedDate = null;
+      availableOnly = false;
+    });
+    loadEvents();
+  }
+
+  @override
+  void dispose() {
+    areaController.dispose();
+    categoryController.dispose();
+    super.dispose();
   }
 
   // ============================================================
@@ -1622,6 +1717,91 @@ class _EventsPageState extends State<EventsPage> {
               const Text(
                 'Find events and choose volunteer work.',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
+              ),
+
+              const SizedBox(height: 20),
+
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: areaController,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (_) => _fetchEvents(applyFilters: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Area',
+                          prefixIcon: Icon(Icons.location_on_outlined),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: categoryController,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (_) => _fetchEvents(applyFilters: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Category',
+                          prefixIcon: Icon(Icons.category_outlined),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _selectDate,
+                              icon: const Icon(Icons.calendar_today_outlined),
+                              label: Text(
+                                selectedDate == null
+                                    ? 'Any date'
+                                    : formatDate(
+                                        selectedDate!
+                                            .toIso8601String()
+                                            .substring(0, 10),
+                                      ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: CheckboxListTile(
+                              contentPadding: EdgeInsets.zero,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: const Text(
+                                'Spots available',
+                                style: TextStyle(fontSize: 13),
+                              ),
+                              value: availableOnly,
+                              onChanged: (value) => setState(
+                                () => availableOnly = value ?? false,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: isLoading
+                                  ? null
+                                  : () => _fetchEvents(applyFilters: true),
+                              icon: const Icon(Icons.search),
+                              label: const Text('Search events'),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: isLoading ? null : _clearFilters,
+                            child: const Text('Clear'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
 
               const SizedBox(height: 20),
@@ -1658,17 +1838,43 @@ class _EventsPageState extends State<EventsPage> {
               // DISPLAY EVENTS
               // ==================================================
               else
-                ...events.map((event) {
-                  return EventCard(
-                    eventId: (event['id'] as num).toInt(),
-                    eventName: event['name'] ?? 'Unnamed Event',
-                    date: formatDate(event['date']),
-                    location: event['location'] ?? '',
-                    description: event['description'] ?? '',
-                    imageUrl: event['image_url']?.toString(),
-                    volunteersNeeded: (event['volunteers_needed'] as num?)
-                        ?.toInt(),
-                  );
+                ...events.asMap().entries.expand((entry) {
+                  final event = entry.value;
+                  final i = entry.key;
+                  return [
+                    FadeSlideIn(
+                      index: i,
+                      child: EventCard(
+                        eventId: (event['id'] as num).toInt(),
+                        eventName: event['name'] ?? 'Unnamed Event',
+                        date: formatDate(event['date']),
+                        location: event['location'] ?? '',
+                        description: event['description'] ?? '',
+                        imageUrl: event['image_url']?.toString(),
+                        volunteersNeeded:
+                            (event['available_slots'] as num?)?.toInt() ??
+                            (event['volunteers_needed'] as num?)?.toInt(),
+                        eventStatus: event['status']?.toString() ?? 'published',
+                        isCached: event['_is_cached'] == true,
+                        startTime: event['start_time']?.toString() ?? '',
+                        category: event['category']?.toString() ?? '',
+                        area: event['area']?.toString() ?? '',
+                        address: event['address']?.toString() ?? '',
+                        headVolunteerName:
+                            event['head_volunteer_name']?.toString() ?? '',
+                        headVolunteerEmail:
+                            event['head_volunteer_email']?.toString() ?? '',
+                        headVolunteerPhone:
+                            event['head_volunteer_phone']?.toString() ?? '',
+                      ),
+                    ),
+                    if (i % 3 == 2 && i != events.length - 1)
+                      FadeSlideIn(
+                        child:
+                            _eventsSplashCards[(i ~/ 3) %
+                                _eventsSplashCards.length],
+                      ),
+                  ];
                 }),
             ],
           ),
@@ -1690,6 +1896,15 @@ class EventCard extends StatelessWidget {
   final String description;
   final String? imageUrl;
   final int? volunteersNeeded;
+  final String eventStatus;
+  final bool isCached;
+  final String startTime;
+  final String category;
+  final String area;
+  final String address;
+  final String headVolunteerName;
+  final String headVolunteerEmail;
+  final String headVolunteerPhone;
 
   const EventCard({
     super.key,
@@ -1700,11 +1915,21 @@ class EventCard extends StatelessWidget {
     this.description = '',
     this.imageUrl,
     this.volunteersNeeded,
+    this.eventStatus = 'published',
+    this.isCached = false,
+    this.startTime = '',
+    this.category = '',
+    this.area = '',
+    this.address = '',
+    this.headVolunteerName = '',
+    this.headVolunteerEmail = '',
+    this.headVolunteerPhone = '',
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: AppColors.pastelFor(eventId),
       margin: const EdgeInsets.only(bottom: 18),
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -1719,20 +1944,26 @@ class EventCard extends StatelessWidget {
                 Expanded(
                   child: Text(eventName, style: AppTextStyles.itemHeading),
                 ),
-                if (volunteersNeeded != null && volunteersNeeded! > 0)
+                if (volunteersNeeded != null)
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.accentSoft,
+                      color: volunteersNeeded == 0
+                          ? AppColors.danger.withValues(alpha: 0.1)
+                          : AppColors.accentSoft,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      '$volunteersNeeded spots',
-                      style: const TextStyle(
-                        color: AppColors.primary,
+                      volunteersNeeded == 0
+                          ? 'Full'
+                          : '$volunteersNeeded spots',
+                      style: TextStyle(
+                        color: volunteersNeeded == 0
+                            ? AppColors.danger
+                            : AppColors.primary,
                         fontWeight: FontWeight.w800,
                         fontSize: 11,
                       ),
@@ -1759,6 +1990,16 @@ class EventCard extends StatelessWidget {
               children: [
                 _EventInfoChip(icon: Icons.calendar_today, label: date),
                 _EventInfoChip(icon: Icons.location_on, label: location),
+                if (startTime.isNotEmpty)
+                  _EventInfoChip(
+                    icon: Icons.access_time,
+                    label: formatTime(startTime),
+                  ),
+                if (category.isNotEmpty)
+                  _EventInfoChip(
+                    icon: Icons.category_outlined,
+                    label: category,
+                  ),
               ],
             ),
             const SizedBox(height: 14),
@@ -1777,6 +2018,15 @@ class EventCard extends StatelessWidget {
                         description: description,
                         imageUrl: imageUrl,
                         volunteersNeeded: volunteersNeeded,
+                        eventStatus: eventStatus,
+                        eventIsCached: isCached,
+                        startTime: startTime,
+                        category: category,
+                        area: area,
+                        address: address,
+                        headVolunteerName: headVolunteerName,
+                        headVolunteerEmail: headVolunteerEmail,
+                        headVolunteerPhone: headVolunteerPhone,
                       ),
                     ),
                   );
@@ -1836,6 +2086,15 @@ class EventDetailsScreen extends StatefulWidget {
   final String description;
   final String? imageUrl;
   final int? volunteersNeeded;
+  final String eventStatus;
+  final bool eventIsCached;
+  final String startTime;
+  final String category;
+  final String area;
+  final String address;
+  final String headVolunteerName;
+  final String headVolunteerEmail;
+  final String headVolunteerPhone;
 
   const EventDetailsScreen({
     super.key,
@@ -1846,6 +2105,15 @@ class EventDetailsScreen extends StatefulWidget {
     this.description = '',
     this.imageUrl,
     this.volunteersNeeded,
+    this.eventStatus = 'published',
+    this.eventIsCached = false,
+    this.startTime = '',
+    this.category = '',
+    this.area = '',
+    this.address = '',
+    this.headVolunteerName = '',
+    this.headVolunteerEmail = '',
+    this.headVolunteerPhone = '',
   });
 
   @override
@@ -1855,18 +2123,116 @@ class EventDetailsScreen extends StatefulWidget {
 class _EventDetailsScreenState extends State<EventDetailsScreen> {
   List<dynamic> tasks = [];
   List<dynamic> announcements = [];
+  Map<String, dynamic>? eventDetails;
   Map<int, String> enrolledStatuses = {};
   String? tasksError;
   String? announcementsError;
+  String? eventDetailsError;
+  String? eventRegistrationStatus;
+  final locationController = TextEditingController();
   bool isLoading = true;
   bool loadingAnnouncements = true;
+  bool tasksUsingCache = false;
+  bool eventDetailsLoaded = false;
+  bool isRegisteringForEvent = false;
   int enrollingTaskId = 0;
 
   @override
   void initState() {
     super.initState();
+    locationController.text = widget.area.isNotEmpty
+        ? widget.area
+        : widget.location;
     loadTasks();
     loadAnnouncements();
+    loadEventDetails();
+    loadEventRegistration();
+  }
+
+  @override
+  void dispose() {
+    locationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> loadEventDetails() async {
+    setState(() {
+      eventDetailsError = null;
+      eventDetailsLoaded = false;
+    });
+
+    try {
+      final data = await ApiService.getEventDetails(widget.eventId);
+      if (!mounted) return;
+      setState(() {
+        eventDetails = data;
+        eventDetailsLoaded = true;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        eventDetailsError = error.toString();
+        eventDetailsLoaded = false;
+      });
+    }
+  }
+
+  Future<void> loadEventRegistration() async {
+    if (!Session.isLoggedIn || Session.isHeadVolunteer) return;
+    try {
+      final registrations = await ApiService.getUserEvents(Session.userId);
+      if (!mounted) return;
+      for (final registration in registrations) {
+        if ((registration['event_id'] as num?)?.toInt() == widget.eventId) {
+          setState(() {
+            eventRegistrationStatus = registration['registration_status']
+                ?.toString();
+            if ((registration['selected_location']?.toString() ?? '')
+                .isNotEmpty) {
+              locationController.text = registration['selected_location']
+                  .toString();
+            }
+          });
+          return;
+        }
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not check event registration: $error')),
+      );
+    }
+  }
+
+  Future<void> registerForEvent() async {
+    final location = locationController.text.trim();
+    if (location.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your preferred event location.')),
+      );
+      return;
+    }
+    setState(() => isRegisteringForEvent = true);
+    try {
+      await ApiService.registerForEvent(
+        eventId: widget.eventId,
+        selectedLocation: location,
+      );
+      if (!mounted) return;
+      setState(() {
+        eventRegistrationStatus = 'confirmed';
+        isRegisteringForEvent = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You are registered for this event.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => isRegisteringForEvent = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
   }
 
   // ============================================================
@@ -1886,6 +2252,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
       setState(() {
         tasks = data;
+        tasksUsingCache = data.any(
+          (task) => task is Map && task['_is_cached'] == true,
+        );
         isLoading = false;
       });
     } catch (e) {
@@ -1963,7 +2332,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
     try {
       final result = await ApiService.enroll(
-        Session.userId,
         taskId,
       ).timeout(const Duration(seconds: 10));
 
@@ -1973,11 +2341,13 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         enrolledStatuses[taskId] = result['status'] ?? 'pending';
         enrollingTaskId = 0;
       });
+      await loadTasks();
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Enrollment submitted successfully. Waiting for approval.',
+            'Enrollment submitted. Your request is pending approval.',
           ),
         ),
       );
@@ -1998,15 +2368,36 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final showEnroll = Session.isLoggedIn && !Session.isHeadVolunteer;
+    final showEnroll =
+        Session.isLoggedIn &&
+        !Session.isHeadVolunteer &&
+        eventDetailsLoaded &&
+        !tasksUsingCache;
+    final headName =
+        eventDetails?['head_volunteer_name']?.toString() ??
+        widget.headVolunteerName;
+    final headEmail =
+        eventDetails?['head_volunteer_email']?.toString() ??
+        widget.headVolunteerEmail;
+    final headPhone =
+        eventDetails?['head_volunteer_phone']?.toString() ??
+        widget.headVolunteerPhone;
+    final headRole =
+        eventDetails?['head_volunteer_role']?.toString() ?? 'Head Volunteer';
+    final eventCapacity =
+        (eventDetails?['available_slots'] as num?)?.toInt() ??
+        widget.volunteersNeeded;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Event Details')),
 
       body: RefreshIndicator(
         onRefresh: () async {
-          await loadTasks();
-          await loadAnnouncements();
+          await Future.wait([
+            loadEventDetails(),
+            loadTasks(),
+            loadAnnouncements(),
+          ]);
         },
 
         child: SingleChildScrollView(
@@ -2019,14 +2410,29 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             children: [
               EventArtwork(
                 eventName: widget.eventName,
-                imageUrl: widget.imageUrl,
+                imageUrl:
+                    eventDetails?['image_url']?.toString() ?? widget.imageUrl,
                 height: 210,
               ),
               const SizedBox(height: 18),
+              if ((!eventDetailsLoaded && widget.eventIsCached) ||
+                  tasksUsingCache)
+                const Card(
+                  child: ListTile(
+                    leading: Icon(Icons.cloud_off, color: AppColors.accent),
+                    title: Text('Offline event information'),
+                    subtitle: Text(
+                      'Showing saved details. Reconnect to refresh or request a task place.',
+                    ),
+                  ),
+                ),
               // ==================================================
               // EVENT NAME
               // ==================================================
-              Text(widget.eventName, style: AppTextStyles.pageHeading),
+              Text(
+                eventDetails?['name']?.toString() ?? widget.eventName,
+                style: AppTextStyles.pageHeading,
+              ),
 
               const SizedBox(height: 20),
 
@@ -2036,7 +2442,15 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               InfoRow(
                 icon: Icons.calendar_today,
                 title: 'Date',
-                value: widget.date,
+                value: formatDate(
+                  eventDetails?['date']?.toString() ?? widget.date,
+                ),
+              ),
+              InfoRow(
+                icon: Icons.flag_outlined,
+                title: 'Status',
+                value:
+                    eventDetails?['status']?.toString() ?? widget.eventStatus,
               ),
 
               // ==================================================
@@ -2045,25 +2459,156 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               InfoRow(
                 icon: Icons.location_on,
                 title: 'Location',
-                value: widget.location,
+                value: eventDetails?['location']?.toString() ?? widget.location,
               ),
-              if (widget.volunteersNeeded != null &&
-                  widget.volunteersNeeded! > 0)
+              if ((eventDetails?['address']?.toString() ?? widget.address)
+                  .trim()
+                  .isNotEmpty)
+                InfoRow(
+                  icon: Icons.place_outlined,
+                  title: 'Address',
+                  value: eventDetails?['address']?.toString() ?? widget.address,
+                ),
+              if ((eventDetails?['start_time']?.toString() ?? widget.startTime)
+                  .isNotEmpty)
+                InfoRow(
+                  icon: Icons.access_time,
+                  title: 'Starts',
+                  value: formatTime(
+                    eventDetails?['start_time']?.toString() ?? widget.startTime,
+                  ),
+                ),
+              if ((eventDetails?['end_time']?.toString() ?? '').isNotEmpty)
+                InfoRow(
+                  icon: Icons.access_time,
+                  title: 'Ends',
+                  value: formatTime(eventDetails?['end_time']?.toString()),
+                ),
+              if ((eventDetails?['category']?.toString() ?? widget.category)
+                  .trim()
+                  .isNotEmpty)
+                InfoRow(
+                  icon: Icons.category_outlined,
+                  title: 'Category',
+                  value:
+                      eventDetails?['category']?.toString() ?? widget.category,
+                ),
+              if (eventCapacity != null)
                 InfoRow(
                   icon: Icons.groups_2_outlined,
-                  title: 'Volunteers needed',
-                  value: '${widget.volunteersNeeded}',
+                  title: eventCapacity == 0 ? 'Availability' : 'Open spots',
+                  value: eventCapacity == 0 ? 'Full' : '$eventCapacity',
                 ),
-              if (widget.description.trim().isNotEmpty) ...[
+              if (headName.isNotEmpty ||
+                  headEmail.isNotEmpty ||
+                  headPhone.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                const Text(
+                  'Organising team · Event contact',
+                  style: AppTextStyles.sectionHeading,
+                ),
+                if (headName.isNotEmpty)
+                  InfoRow(
+                    icon: Icons.person_outline,
+                    title: headRole,
+                    value: headName,
+                  ),
+                if (headEmail.isNotEmpty)
+                  InfoRow(
+                    icon: Icons.email_outlined,
+                    title: 'Email',
+                    value: headEmail,
+                  ),
+                if (headPhone.isNotEmpty)
+                  InfoRow(
+                    icon: Icons.phone_outlined,
+                    title: 'Phone',
+                    value: headPhone,
+                  ),
+              ],
+              if ((eventDetails?['description']?.toString() ??
+                      widget.description)
+                  .trim()
+                  .isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Text(
-                  widget.description,
+                  eventDetails?['description']?.toString() ??
+                      widget.description,
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     height: 1.5,
                   ),
                 ),
               ],
+
+              const SizedBox(height: 20),
+
+              if (showEnroll && eventCapacity == 0)
+                const Card(
+                  child: ListTile(
+                    leading: Icon(Icons.event_busy, color: AppColors.danger),
+                    title: Text('This event is full.'),
+                  ),
+                )
+              else if (showEnroll)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Register for this event',
+                          style: AppTextStyles.sectionHeading,
+                        ),
+                        const SizedBox(height: 8),
+                        if (eventRegistrationStatus == null) ...[
+                          TextField(
+                            controller: locationController,
+                            textCapitalization: TextCapitalization.words,
+                            decoration: const InputDecoration(
+                              labelText: 'Preferred area or meeting location',
+                              prefixIcon: Icon(Icons.location_on_outlined),
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: isRegisteringForEvent
+                                  ? null
+                                  : registerForEvent,
+                              icon: const Icon(Icons.how_to_reg),
+                              label: isRegisteringForEvent
+                                  ? const SizedBox(
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Register for event'),
+                            ),
+                          ),
+                        ] else
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(
+                              Icons.check_circle_outline,
+                              color: AppColors.success,
+                            ),
+                            title: Text(
+                              'Registration ${eventRegistrationStatus!.toLowerCase()}',
+                            ),
+                            subtitle: Text(
+                              'Selected location: ${locationController.text}',
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
 
               const SizedBox(height: 20),
 
@@ -2129,12 +2674,37 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     child: VolunteerTaskCard(
                       taskId: taskId,
                       taskName: task['task_name'] ?? 'Unnamed Task',
+                      description: task['description']?.toString() ?? '',
                       time:
                           '${formatTime(task['start_time'])} - '
                           '${formatTime(task['end_time'])}',
                       date: formatDate(task['date']),
                       location: task['location'] ?? '',
                       instructions: task['instructions'] ?? '',
+                      additionalRequirements:
+                          task['additional_requirements']?.toString() ?? '',
+                      capacity: (task['volunteers_required'] as num?)?.toInt(),
+                      acceptedCount:
+                          (task['accepted_count'] as num?)?.toInt() ?? 0,
+                      pendingCount:
+                          (task['pending_count'] as num?)?.toInt() ?? 0,
+                      remainingPlaces: (task['remaining_places'] as num?)
+                          ?.toInt(),
+                      compensationType:
+                          task['compensation_type']?.toString() ?? 'unpaid',
+                      compensationAmount: task['compensation_amount']
+                          ?.toString(),
+                      compensationCurrency:
+                          task['compensation_currency']?.toString() ?? 'INR',
+                      compensationTerms:
+                          task['compensation_terms']?.toString() ?? '',
+                      headVolunteerName:
+                          task['head_volunteer_name']?.toString() ?? '',
+                      headVolunteerEmail:
+                          task['head_volunteer_email']?.toString() ?? '',
+                      headVolunteerPhone:
+                          task['head_volunteer_phone']?.toString() ?? '',
+                      isCached: task['_is_cached'] == true,
                       showEnrollButton: showEnroll,
                       isEnrolling: enrollingTaskId == taskId,
                       enrollmentStatus: enrollmentStatus,
@@ -2185,6 +2755,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                       ),
                     ),
                     child: Card(
+                      color: AppColors.pastelFor(a['id']),
                       margin: const EdgeInsets.only(bottom: 12),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -2231,32 +2802,63 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 class VolunteerTaskCard extends StatelessWidget {
   final int taskId;
   final String taskName;
+  final String description;
   final String time;
   final String date;
   final String location;
   final String instructions;
+  final String additionalRequirements;
+  final int? capacity;
+  final int acceptedCount;
+  final int pendingCount;
+  final int? remainingPlaces;
+  final String compensationType;
+  final String? compensationAmount;
+  final String compensationCurrency;
+  final String compensationTerms;
+  final String headVolunteerName;
+  final String headVolunteerEmail;
+  final String headVolunteerPhone;
+  final String taskStatus;
   final bool showEnrollButton;
   final bool isEnrolling;
   final String? enrollmentStatus;
+  final bool isCached;
   final VoidCallback? onEnroll;
 
   const VolunteerTaskCard({
     super.key,
     required this.taskId,
     required this.taskName,
+    this.description = '',
     required this.time,
     required this.date,
     required this.location,
     required this.instructions,
+    this.additionalRequirements = '',
+    this.capacity,
+    this.acceptedCount = 0,
+    this.pendingCount = 0,
+    this.remainingPlaces,
+    this.compensationType = 'unpaid',
+    this.compensationAmount,
+    this.compensationCurrency = 'INR',
+    this.compensationTerms = '',
+    this.headVolunteerName = '',
+    this.headVolunteerEmail = '',
+    this.headVolunteerPhone = '',
+    this.taskStatus = 'Open',
     this.showEnrollButton = true,
     this.isEnrolling = false,
     this.enrollmentStatus,
+    this.isCached = false,
     this.onEnroll,
   });
 
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'approved':
+      case 'accepted':
         return AppColors.success;
       case 'rejected':
         return AppColors.danger;
@@ -2268,20 +2870,37 @@ class VolunteerTaskCard extends StatelessWidget {
   String get _statusLabel {
     switch (enrollmentStatus?.toLowerCase()) {
       case 'approved':
+      case 'accepted':
         return 'ACCEPTED';
       case 'rejected':
         return 'DECLINED';
       case 'pending':
       case null:
-        return 'PENDING';
+        return 'PENDING APPROVAL';
       default:
         return enrollmentStatus!.toUpperCase();
     }
   }
 
+  String get _compensationLabel {
+    switch (compensationType.toLowerCase()) {
+      case 'fixed':
+        return 'Fixed stipend: $compensationCurrency $compensationAmount';
+      case 'hourly':
+        return 'Hourly rate: $compensationCurrency $compensationAmount / hour';
+      default:
+        return 'Volunteer — unpaid';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final status = taskStatus.toLowerCase();
+    final taskOpen = status == 'open' || status == 'assigned';
+    final canRequestAgain = enrollmentStatus?.toLowerCase() == 'rejected';
+    final full = remainingPlaces == 0;
     return Card(
+      color: AppColors.pastelFor(taskName),
       margin: const EdgeInsets.only(bottom: 15),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -2302,10 +2921,80 @@ class VolunteerTaskCard extends StatelessWidget {
             InfoRow(icon: Icons.location_on, title: 'Where', value: location),
 
             InfoRow(icon: Icons.menu_book, title: 'How', value: instructions),
+            if (description.trim().isNotEmpty)
+              InfoRow(
+                icon: Icons.description_outlined,
+                title: 'Responsibilities',
+                value: description,
+              ),
+            if (additionalRequirements.trim().isNotEmpty)
+              InfoRow(
+                icon: Icons.checklist_outlined,
+                title: 'Requirements',
+                value: additionalRequirements,
+              ),
+            InfoRow(
+              icon: Icons.payments_outlined,
+              title: 'Compensation',
+              value: _compensationLabel,
+            ),
+            if (compensationTerms.trim().isNotEmpty)
+              InfoRow(
+                icon: Icons.receipt_long_outlined,
+                title: 'Payment terms',
+                value: compensationTerms,
+              ),
+            if (capacity != null)
+              InfoRow(
+                icon: Icons.groups_outlined,
+                title: 'Capacity',
+                value:
+                    '$acceptedCount accepted · $pendingCount pending · '
+                    '$remainingPlaces places left',
+              )
+            else
+              const InfoRow(
+                icon: Icons.groups_outlined,
+                title: 'Capacity',
+                value: 'No capacity limit',
+              ),
+            const Text(
+              'Pending requests reserve a place until accepted or rejected.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            ),
+            if (headVolunteerName.isNotEmpty ||
+                headVolunteerEmail.isNotEmpty ||
+                headVolunteerPhone.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const Text('Task contact', style: AppTextStyles.sectionHeading),
+              if (headVolunteerName.isNotEmpty)
+                InfoRow(
+                  icon: Icons.person_outline,
+                  title: 'Head Volunteer',
+                  value: headVolunteerName,
+                ),
+              if (headVolunteerEmail.isNotEmpty)
+                InfoRow(
+                  icon: Icons.email_outlined,
+                  title: 'Email',
+                  value: headVolunteerEmail,
+                ),
+              if (headVolunteerPhone.isNotEmpty)
+                InfoRow(
+                  icon: Icons.phone_outlined,
+                  title: 'Phone',
+                  value: headVolunteerPhone,
+                ),
+            ],
 
             const SizedBox(height: 12),
 
-            if (enrollmentStatus != null) ...[
+            if (isCached)
+              const Text(
+                'Reconnect to refresh capacity and enrolment status.',
+                style: TextStyle(color: AppColors.textSecondary),
+              )
+            else if (enrollmentStatus != null && !canRequestAgain) ...[
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -2326,7 +3015,15 @@ class VolunteerTaskCard extends StatelessWidget {
                   ),
                 ),
               ),
-            ] else if (showEnrollButton) ...[
+            ] else if (showEnrollButton && taskOpen && full) ...[
+              const SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: null,
+                  child: Text('NO PLACES AVAILABLE'),
+                ),
+              ),
+            ] else if (showEnrollButton && taskOpen) ...[
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -2337,7 +3034,17 @@ class VolunteerTaskCard extends StatelessWidget {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('ENROLL'),
+                      : Text(
+                          canRequestAgain ? 'REQUEST AGAIN' : 'REQUEST TO JOIN',
+                        ),
+                ),
+              ),
+            ] else if (!taskOpen) ...[
+              Text(
+                'Task $taskStatus',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -2363,13 +3070,71 @@ class MyTasksPage extends StatefulWidget {
 
 class _MyTasksPageState extends State<MyTasksPage> {
   List<dynamic> tasks = [];
+  List<dynamic> eventRegistrations = [];
+  List<dynamic> notifications = [];
   bool isLoading = true;
   String? loadError;
+  String? eventRegistrationsError;
+  String? notificationsError;
 
   @override
   void initState() {
     super.initState();
     loadTasks();
+    loadPersonalUpdates();
+  }
+
+  Future<void> refreshAll() async {
+    await Future.wait([loadTasks(), loadPersonalUpdates()]);
+  }
+
+  Future<void> loadPersonalUpdates() async {
+    try {
+      final data = await ApiService.getUserEvents(Session.userId);
+      if (!mounted) return;
+      setState(() {
+        eventRegistrations = data;
+        eventRegistrationsError = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => eventRegistrationsError = error.toString());
+    }
+
+    try {
+      final data = await ApiService.getNotifications();
+      if (!mounted) return;
+      setState(() {
+        notifications = data;
+        notificationsError = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => notificationsError = error.toString());
+    }
+  }
+
+  Future<void> markNotificationRead(int notificationId) async {
+    try {
+      await ApiService.markNotificationRead(notificationId);
+      if (!mounted) return;
+      setState(() {
+        notifications = notifications.map((notification) {
+          if ((notification['id'] as num?)?.toInt() == notificationId) {
+            return {
+              ...Map<String, dynamic>.from(notification as Map),
+              'read_at': DateTime.now().toIso8601String(),
+            };
+          }
+          return notification;
+        }).toList();
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not update notification: $error')),
+      );
+    }
   }
 
   Future<void> loadTasks() async {
@@ -2405,7 +3170,7 @@ class _MyTasksPageState extends State<MyTasksPage> {
   Widget build(BuildContext context) {
     final content = SafeArea(
       child: RefreshIndicator(
-        onRefresh: loadTasks,
+        onRefresh: refreshAll,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20),
@@ -2422,6 +3187,60 @@ class _MyTasksPageState extends State<MyTasksPage> {
               ),
 
               const SizedBox(height: 20),
+
+              const Text(
+                'My event registrations',
+                style: AppTextStyles.sectionHeading,
+              ),
+              const SizedBox(height: 10),
+              if (eventRegistrationsError != null)
+                Text(
+                  'Could not load event registrations: $eventRegistrationsError',
+                  style: const TextStyle(color: AppColors.danger),
+                )
+              else if (eventRegistrations.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    'You have not registered for any events yet.',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                )
+              else
+                ...eventRegistrations.map(_buildRegisteredEventCard),
+
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text('Updates', style: AppTextStyles.sectionHeading),
+                  ),
+                  IconButton(
+                    tooltip: 'Refresh updates',
+                    onPressed: loadPersonalUpdates,
+                    icon: const Icon(Icons.refresh),
+                  ),
+                ],
+              ),
+              if (notificationsError != null)
+                Text(
+                  'Could not load updates: $notificationsError',
+                  style: const TextStyle(color: AppColors.danger),
+                )
+              else if (notifications.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    'No updates yet.',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                )
+              else
+                ...notifications.map(_buildNotificationCard),
+
+              const SizedBox(height: 12),
+              const Text('My tasks', style: AppTextStyles.sectionHeading),
+              const SizedBox(height: 10),
 
               if (!isLoading) ...[
                 _TaskSummary(tasks: tasks),
@@ -2479,6 +3298,112 @@ class _MyTasksPageState extends State<MyTasksPage> {
       );
     }
     return content;
+  }
+
+  Widget _buildRegisteredEventCard(dynamic registration) {
+    final eventId = (registration['event_id'] as num?)?.toInt();
+    final status =
+        registration['registration_status']?.toString() ?? 'confirmed';
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              registration['event_name']?.toString() ?? 'Event',
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${formatDate(registration['date'])} · '
+              '${registration['selected_location'] ?? registration['location'] ?? ''}',
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
+            Text(
+              'Registration: ${status.toUpperCase()}',
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if ((registration['head_volunteer_name']?.toString() ?? '')
+                .isNotEmpty)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.support_agent),
+                title: Text(registration['head_volunteer_name'].toString()),
+                subtitle: Text(
+                  [
+                    registration['head_volunteer_email']?.toString() ?? '',
+                    registration['head_volunteer_phone']?.toString() ?? '',
+                  ].where((value) => value.isNotEmpty).join(' · '),
+                ),
+              ),
+            if (eventId != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EventDetailsScreen(
+                        eventId: eventId,
+                        eventName:
+                            registration['event_name']?.toString() ?? 'Event',
+                        date: formatDate(registration['date']),
+                        location: registration['location']?.toString() ?? '',
+                        imageUrl: registration['image_url']?.toString(),
+                        area: registration['area']?.toString() ?? '',
+                        headVolunteerName:
+                            registration['head_volunteer_name']?.toString() ??
+                            '',
+                        headVolunteerEmail:
+                            registration['head_volunteer_email']?.toString() ??
+                            '',
+                        headVolunteerPhone:
+                            registration['head_volunteer_phone']?.toString() ??
+                            '',
+                      ),
+                    ),
+                  ),
+                  child: const Text('Event details'),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationCard(dynamic notification) {
+    final notificationId = (notification['id'] as num?)?.toInt();
+    final isRead = notification['read_at'] != null;
+    return Card(
+      color: AppColors.pastelFor(notificationId),
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        leading: Icon(
+          isRead ? Icons.notifications_none : Icons.notifications_active,
+          color: isRead ? AppColors.textSecondary : AppColors.primary,
+        ),
+        title: Text(
+          notification['title']?.toString() ?? 'Update',
+          style: TextStyle(
+            fontWeight: isRead ? FontWeight.w500 : FontWeight.w800,
+          ),
+        ),
+        subtitle: Text(notification['message']?.toString() ?? ''),
+        trailing: isRead || notificationId == null
+            ? null
+            : IconButton(
+                tooltip: 'Mark as read',
+                onPressed: () => markNotificationRead(notificationId),
+                icon: const Icon(Icons.done),
+              ),
+      ),
+    );
   }
 }
 
@@ -2675,6 +3600,7 @@ class TaskCard extends StatelessWidget {
     final statusColor = _statusColor(status);
 
     return Card(
+      color: AppColors.pastelFor(taskName),
       margin: const EdgeInsets.only(bottom: 15),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -3020,30 +3946,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                     ),
-                    if (Session.isHeadVolunteerPending) ...[
-                      const Divider(),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: const [
-                          Icon(
-                            Icons.hourglass_top,
-                            color: Color(0xFFD97706),
-                            size: 18,
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Head Volunteer status is pending approval',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF92400E),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -3137,7 +4039,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         decoration: BoxDecoration(
                           color: healthStatus!.contains('Connected')
                               ? AppColors.accentSoft
-                              : const Color(0xFFFFECEE),
+                              : const Color(0xFFF2C9CF),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -3232,6 +4134,8 @@ class _ProfilePageState extends State<ProfilePage> {
           userId: Session.userId,
           name: profile['name']?.toString() ?? '',
           studentId: profile['student_id']?.toString() ?? '',
+          phone: profile['phone']?.toString() ?? '',
+          area: profile['area']?.toString() ?? '',
         ),
       ),
     );
@@ -3247,6 +4151,8 @@ class _ProfilePageState extends State<ProfilePage> {
     final email = profile['email'] ?? '';
     final studentId = profile['student_id'] ?? '';
     final role = profile['role'] ?? 'Volunteer';
+    final phone = profile['phone']?.toString() ?? '';
+    final area = profile['area']?.toString() ?? '';
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -3291,6 +4197,18 @@ class _ProfilePageState extends State<ProfilePage> {
                     leading: const Icon(Icons.badge_outlined),
                     title: const Text('Student ID'),
                     subtitle: Text(studentId),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.phone_outlined),
+                    title: const Text('Phone'),
+                    subtitle: Text(phone.isEmpty ? 'Not provided' : phone),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.location_on_outlined),
+                    title: const Text('Area'),
+                    subtitle: Text(area.isEmpty ? 'Not provided' : area),
                   ),
                   const Divider(height: 1),
                   ListTile(

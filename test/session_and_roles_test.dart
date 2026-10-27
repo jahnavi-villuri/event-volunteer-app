@@ -36,7 +36,7 @@ void main() {
       expect(Session.canManageVolunteers, isFalse);
     });
 
-    test('head volunteer pending session cannot perform privileged actions', () {
+    test('pending head role metadata grants no privileged actions', () {
       Session.setUser({
         'id': 2,
         'name': 'Applicant Head',
@@ -74,24 +74,28 @@ void main() {
       expect(Session.role, 'Head Volunteer');
       expect(Session.isHeadVolunteer, isTrue);
       expect(Session.isHeadVolunteerPending, isFalse);
-      expect(Session.canApproveRoleRequests, isTrue);
+      expect(Session.canApproveRoleRequests, isFalse);
       expect(Session.canPostTasks, isTrue);
       expect(Session.canManageVolunteers, isTrue);
     });
 
-    test('updateUser and clear work as expected', () {
+    test('only administrators can approve head role requests', () {
       Session.setUser({
         'id': 4,
-        'name': 'Updatable User',
-        'role': 'Volunteer',
+        'name': 'Administrator',
+        'role': 'Administrator',
+        'access_token': 'admin_token',
       });
+
+      expect(Session.canApproveRoleRequests, isTrue);
+    });
+
+    test('updateUser and clear work as expected', () {
+      Session.setUser({'id': 4, 'name': 'Updatable User', 'role': 'Volunteer'});
 
       expect(Session.role, 'Volunteer');
 
-      Session.updateUser({
-        'role': 'Head Volunteer',
-        'role_status': 'approved',
-      });
+      Session.updateUser({'role': 'Head Volunteer', 'role_status': 'approved'});
 
       expect(Session.role, 'Head Volunteer');
       expect(Session.isHeadVolunteer, isTrue);

@@ -24,7 +24,9 @@ class LocalDatabaseService {
     if (isInitialized) return;
 
     if (kIsWeb) {
-      debugPrint('[LocalDatabaseService] Running on Web - using local in-memory fallback.');
+      debugPrint(
+        '[LocalDatabaseService] Running on Web - using local in-memory fallback.',
+      );
       return;
     }
 
@@ -120,9 +122,13 @@ class LocalDatabaseService {
           });
         },
       );
-      debugPrint('[LocalDatabaseService] SQLite initialized successfully at $path');
+      debugPrint(
+        '[LocalDatabaseService] SQLite initialized successfully at $path',
+      );
     } catch (e, stack) {
-      debugPrint('[LocalDatabaseService] SQLite initialization warning: $e\n$stack');
+      debugPrint(
+        '[LocalDatabaseService] SQLite initialization warning: $e\n$stack',
+      );
     }
   }
 
@@ -145,19 +151,15 @@ class LocalDatabaseService {
         if (raw is Map) {
           final id = int.tryParse(raw['id']?.toString() ?? '') ?? 0;
           if (id > 0) {
-            batch.insert(
-              'cached_events',
-              {
-                'id': id,
-                'name': raw['name']?.toString() ?? '',
-                'date': raw['date']?.toString() ?? '',
-                'location': raw['location']?.toString() ?? '',
-                'description': raw['description']?.toString(),
-                'volunteers_needed':
-                    int.tryParse(raw['volunteers_needed']?.toString() ?? '') ?? 0,
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
+            batch.insert('cached_events', {
+              'id': id,
+              'name': raw['name']?.toString() ?? '',
+              'date': raw['date']?.toString() ?? '',
+              'location': raw['location']?.toString() ?? '',
+              'description': raw['description']?.toString(),
+              'volunteers_needed':
+                  int.tryParse(raw['volunteers_needed']?.toString() ?? '') ?? 0,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
           }
         }
       }
@@ -202,22 +204,19 @@ class LocalDatabaseService {
         if (raw is Map) {
           final id = int.tryParse(raw['id']?.toString() ?? '') ?? 0;
           if (id > 0) {
-            batch.insert(
-              'cached_tasks',
-              {
-                'id': id,
-                'event_id': eventId,
-                'task_name': raw['task_name']?.toString() ?? '',
-                'date': raw['date']?.toString() ?? '',
-                'start_time': raw['start_time']?.toString() ?? '',
-                'end_time': raw['end_time']?.toString() ?? '',
-                'location': raw['location']?.toString() ?? '',
-                'instructions': raw['instructions']?.toString(),
-                'volunteers_required':
-                    int.tryParse(raw['volunteers_required']?.toString() ?? '') ?? 0,
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
+            batch.insert('cached_tasks', {
+              'id': id,
+              'event_id': eventId,
+              'task_name': raw['task_name']?.toString() ?? '',
+              'date': raw['date']?.toString() ?? '',
+              'start_time': raw['start_time']?.toString() ?? '',
+              'end_time': raw['end_time']?.toString() ?? '',
+              'location': raw['location']?.toString() ?? '',
+              'instructions': raw['instructions']?.toString(),
+              'volunteers_required':
+                  int.tryParse(raw['volunteers_required']?.toString() ?? '') ??
+                  0,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
           }
         }
       }
@@ -257,15 +256,11 @@ class LocalDatabaseService {
       return;
     }
 
-    await _db!.insert(
-      'saved_events',
-      {
-        'user_id': userId,
-        'event_id': eventId,
-        'notes': notes,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _db!.insert('saved_events', {
+      'user_id': userId,
+      'event_id': eventId,
+      'notes': notes,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> unsaveEvent(int userId, int eventId) async {
@@ -334,18 +329,13 @@ class LocalDatabaseService {
         if (raw is Map) {
           final id = int.tryParse(raw['id']?.toString() ?? '') ?? 0;
           if (id > 0) {
-            batch.insert(
-              'cached_announcements',
-              {
-                'id': id,
-                'event_id':
-                    int.tryParse(raw['event_id']?.toString() ?? '') ?? 0,
-                'title': raw['title']?.toString() ?? '',
-                'message': raw['message']?.toString() ?? '',
-                'created_at': raw['created_at']?.toString(),
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
+            batch.insert('cached_announcements', {
+              'id': id,
+              'event_id': int.tryParse(raw['event_id']?.toString() ?? '') ?? 0,
+              'title': raw['title']?.toString() ?? '',
+              'message': raw['message']?.toString() ?? '',
+              'created_at': raw['created_at']?.toString(),
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
           }
         }
       }
@@ -363,10 +353,7 @@ class LocalDatabaseService {
       return [];
     }
 
-    final rows = await _db!.query(
-      'cached_announcements',
-      orderBy: 'id DESC',
-    );
+    final rows = await _db!.query('cached_announcements', orderBy: 'id DESC');
     return rows;
   }
 
@@ -381,11 +368,10 @@ class LocalDatabaseService {
       return;
     }
 
-    await _db!.insert(
-      'app_metadata',
-      {'key': key, 'value': value},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _db!.insert('app_metadata', {
+      'key': key,
+      'value': value,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<String?> getMetadata(String key) async {

@@ -44,6 +44,10 @@ class Session {
   static bool get isHeadVolunteerPending =>
       roleRequested == 'Head Volunteer' && roleStatus == 'pending';
 
+  static String get phone => (currentUser?['phone'] ?? '') as String;
+
+  static String get area => (currentUser?['area'] ?? '') as String;
+
   static String? get accessToken {
     final token = currentUser?['access_token'];
     return token is String && token.isNotEmpty ? token : null;
@@ -53,7 +57,7 @@ class Session {
 
   static bool get isHeadVolunteer => role == 'Head Volunteer';
 
-  static bool get canApproveRoleRequests => isHeadVolunteer;
+  static bool get canApproveRoleRequests => role == 'Administrator';
 
   static bool get canPostTasks => isHeadVolunteer;
 

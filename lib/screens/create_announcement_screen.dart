@@ -49,9 +49,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
 
     if (selectedEventId == null || title.isEmpty || message.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Event, title and message are required'),
-        ),
+        const SnackBar(content: Text('Event, title and message are required')),
       );
       return;
     }
@@ -69,9 +67,9 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
 
       setState(() => isLoading = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Announcement published')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Announcement published')));
 
       Navigator.pop(context, true);
     } catch (e) {

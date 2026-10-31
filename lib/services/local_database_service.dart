@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import 'db_factory.dart';
 
 /// Local SQLite Database Service
 ///
@@ -31,19 +32,8 @@ class LocalDatabaseService {
     }
 
     try {
-      // Initialize FFI for desktop and unit tests
-      if (!kIsWeb) {
-        try {
-          sqfliteFfiInit();
-          databaseFactory = databaseFactoryFfi;
-        } catch (_) {}
-      }
-
-      final dbPath = await getDatabasesPath();
-      final path = p.join(dbPath, _dbName);
-
-      _db = await openDatabase(
-        path,
+      _db = await openAppDatabase(
+        _dbName,
         version: _dbVersion,
         onConfigure: (db) async {
           await db.execute('PRAGMA foreign_keys = ON;');
@@ -123,7 +113,7 @@ class LocalDatabaseService {
         },
       );
       debugPrint(
-        '[LocalDatabaseService] SQLite initialized successfully at $path',
+        '[LocalDatabaseService] SQLite initialized successfully at ${_db!.path}',
       );
     } catch (e, stack) {
       debugPrint(

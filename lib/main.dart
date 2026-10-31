@@ -3869,7 +3869,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (!mounted) return;
       setState(() {
         healthStatus =
-            'Connected: Server OK (Database: ${res['database'] ?? 'sqlite'})';
+            'Connected: ${ApiService.useLocalBackend ? 'On-device database OK' : 'Server OK'} (Database: ${res['database'] ?? 'sqlite'})';
         isCheckingHealth = false;
       });
     } catch (e) {
@@ -3979,7 +3979,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      ApiService.baseUrl,
+                      ApiService.useLocalBackend
+                          ? 'On this device (no server needed)'
+                          : ApiService.baseUrl,
                       style: const TextStyle(
                         fontFamily: 'monospace',
                         color: AppColors.textSecondary,

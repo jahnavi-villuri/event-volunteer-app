@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import 'local_backend.dart';
 import 'local_database_service.dart';
 import 'session.dart';
 
@@ -20,6 +21,22 @@ class ApiException implements Exception {
 
 class ApiService {
   static String? _customBaseUrl;
+
+  static final http.Client _remoteClient = http.Client();
+  static final http.Client _localClient = LocalBackendClient();
+
+  /// True when the app answers its own requests from the on-device SQLite
+  /// database instead of calling the Node.js server. This is the default on
+  /// Android and desktop; pass --dart-define=API_BASE_URL=... (or run on web)
+  /// to use a remote server instead.
+  static bool get useLocalBackend {
+    if (kIsWeb) return false;
+    if (_customBaseUrl != null && _customBaseUrl!.isNotEmpty) return false;
+    return const String.fromEnvironment('API_BASE_URL').isEmpty;
+  }
+
+  static http.Client get _client =>
+      useLocalBackend ? _localClient : _remoteClient;
 
   static void setBaseUrl(String url) {
     _customBaseUrl = url.trim().replaceAll(RegExp(r'/+$'), '');
@@ -64,7 +81,9 @@ class ApiService {
     Future<http.Response> Function() requestCall,
   ) async {
     try {
-      final response = await requestCall().timeout(_timeout);
+      final response = useLocalBackend
+          ? await requestCall()
+          : await requestCall().timeout(_timeout);
       return response;
     } on TimeoutException {
       throw ApiException(
@@ -175,7 +194,7 @@ class ApiService {
 
   static Future<Map<String, dynamic>> checkHealth() async {
     final response = await _send(
-      () => http.get(uri('/api/health'), headers: _headers),
+      () => _client.get(uri('/api/health'), headers: _headers),
     );
 
     return _parseJsonResponse(response);
@@ -193,7 +212,7 @@ class ApiService {
     required String role,
   }) async {
     final response = await _send(
-      () => http.post(
+      () => _client.post(
         uri('/api/register'),
         headers: _headers,
         body: jsonEncode({
@@ -219,7 +238,7 @@ class ApiService {
     required String password,
   }) async {
     final response = await _send(
-      () => http.post(
+      () => _client.post(
         uri('/api/login'),
         headers: _headers,
         body: jsonEncode({'email': email.trim(), 'password': password}),
@@ -244,7 +263,7 @@ class ApiService {
 
   static Future<Map<String, dynamic>> getCurrentUser() async {
     final response = await _send(
-      () => http.get(uri('/api/auth/me'), headers: _headers),
+      () => _client.get(uri('/api/auth/me'), headers: _headers),
     );
 
     final data = _parseJsonResponse(response);
@@ -278,14 +297,16 @@ class ApiService {
     ).replace(queryParameters: query.isEmpty ? null : query);
     try {
       final response = await _send(
-        () => http.get(eventsUri, headers: _headers),
+        () => _client.get(eventsUri, headers: _headers),
       );
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
 
         if (decoded is List) {
-          unawaited(LocalDatabaseService.instance.cacheEvents(decoded));
+          if (!useLocalBackend) {
+            unawaited(LocalDatabaseService.instance.cacheEvents(decoded));
+          }
 
           return decoded;
         }
@@ -335,7 +356,7 @@ class ApiService {
 
   static Future<List<dynamic>> getManagedEvents() async {
     final response = await _send(
-      () => http.get(uri('/api/head/events'), headers: _headers),
+      () => _client.get(uri('/api/head/events'), headers: _headers),
     );
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
@@ -368,7 +389,7 @@ class ApiService {
     String registrationDeadline = '',
   }) async {
     final response = await _send(
-      () => http.post(
+      () => _client.post(
         uri('/api/events'),
         headers: _headers,
         body: jsonEncode({
@@ -402,7 +423,7 @@ class ApiService {
     required Map<String, dynamic> details,
   }) async {
     final response = await _send(
-      () => http.put(
+      () => _client.put(
         uri('/api/events/$eventId'),
         headers: _headers,
         body: jsonEncode(details),
@@ -413,14 +434,14 @@ class ApiService {
 
   static Future<Map<String, dynamic>> getEventDetails(int eventId) async {
     final response = await _send(
-      () => http.get(uri('/api/events/$eventId'), headers: _headers),
+      () => _client.get(uri('/api/events/$eventId'), headers: _headers),
     );
     return _parseJsonResponse(response);
   }
 
   static Future<Map<String, dynamic>> publishEvent(int eventId) async {
     final response = await _send(
-      () => http.put(
+      () => _client.put(
         uri('/api/events/$eventId/publish'),
         headers: _headers,
         body: jsonEncode({}),
@@ -431,7 +452,7 @@ class ApiService {
 
   static Future<Map<String, dynamic>> cancelEvent(int eventId) async {
     final response = await _send(
-      () => http.put(
+      () => _client.put(
         uri('/api/events/$eventId/cancel'),
         headers: _headers,
         body: jsonEncode({}),
@@ -445,7 +466,7 @@ class ApiService {
     required String selectedLocation,
   }) async {
     final response = await _send(
-      () => http.post(
+      () => _client.post(
         uri('/api/events/$eventId/register'),
         headers: _headers,
         body: jsonEncode({'selected_location': selectedLocation.trim()}),
@@ -456,7 +477,7 @@ class ApiService {
 
   static Future<List<dynamic>> getUserEvents(int userId) async {
     final response = await _send(
-      () => http.get(uri('/api/users/$userId/events'), headers: _headers),
+      () => _client.get(uri('/api/users/$userId/events'), headers: _headers),
     );
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
@@ -466,7 +487,7 @@ class ApiService {
 
   static Future<List<dynamic>> getNotifications() async {
     final response = await _send(
-      () => http.get(uri('/api/notifications'), headers: _headers),
+      () => _client.get(uri('/api/notifications'), headers: _headers),
     );
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
@@ -476,7 +497,7 @@ class ApiService {
 
   static Future<void> markNotificationRead(int notificationId) async {
     final response = await _send(
-      () => http.put(
+      () => _client.put(
         uri('/api/notifications/$notificationId/read'),
         headers: _headers,
         body: jsonEncode({}),
@@ -492,14 +513,18 @@ class ApiService {
   static Future<List<dynamic>> getTasks(int eventId) async {
     try {
       final response = await _send(
-        () => http.get(uri('/api/events/$eventId/tasks'), headers: _headers),
+        () => _client.get(uri('/api/events/$eventId/tasks'), headers: _headers),
       );
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
 
         if (decoded is List) {
-          unawaited(LocalDatabaseService.instance.cacheTasks(eventId, decoded));
+          if (!useLocalBackend) {
+            unawaited(
+              LocalDatabaseService.instance.cacheTasks(eventId, decoded),
+            );
+          }
 
           return decoded;
         }
@@ -551,7 +576,7 @@ class ApiService {
     String additionalRequirements = '',
   }) async {
     final response = await _send(
-      () => http.post(
+      () => _client.post(
         uri('/api/tasks'),
         headers: _headers,
         body: jsonEncode({
@@ -582,7 +607,7 @@ class ApiService {
     required Map<String, dynamic> details,
   }) async {
     final response = await _send(
-      () => http.put(
+      () => _client.put(
         uri('/api/tasks/$taskId'),
         headers: _headers,
         body: jsonEncode(details),
@@ -597,7 +622,7 @@ class ApiService {
 
   static Future<Map<String, dynamic>> enroll(int taskId) async {
     final response = await _send(
-      () => http.post(
+      () => _client.post(
         uri('/api/enroll'),
         headers: _headers,
         body: jsonEncode({'task_id': taskId}),
@@ -613,7 +638,7 @@ class ApiService {
 
   static Future<List<dynamic>> getUserTasks(int userId) async {
     final response = await _send(
-      () => http.get(uri('/api/users/$userId/tasks'), headers: _headers),
+      () => _client.get(uri('/api/users/$userId/tasks'), headers: _headers),
     );
 
     if (response.statusCode == 200) {
@@ -638,7 +663,7 @@ class ApiService {
     String area = '',
   }) async {
     final response = await _send(
-      () => http.put(
+      () => _client.put(
         uri('/api/users/$userId/profile'),
         headers: _headers,
         body: jsonEncode({
@@ -667,7 +692,7 @@ class ApiService {
     final query = status == null ? '' : '?status=$status';
 
     final response = await _send(
-      () => http.get(uri('/api/enrollments$query'), headers: _headers),
+      () => _client.get(uri('/api/enrollments$query'), headers: _headers),
     );
 
     if (response.statusCode == 200) {
@@ -686,7 +711,7 @@ class ApiService {
 
   static Future<List<dynamic>> getTaskVolunteers(int taskId) async {
     final response = await _send(
-      () => http.get(uri('/api/tasks/$taskId/volunteers'), headers: _headers),
+      () => _client.get(uri('/api/tasks/$taskId/volunteers'), headers: _headers),
     );
 
     if (response.statusCode == 200) {
@@ -708,7 +733,7 @@ class ApiService {
     String status,
   ) async {
     final response = await _send(
-      () => http.put(
+      () => _client.put(
         uri('/api/enrollments/$enrollmentId/status'),
         headers: _headers,
         body: jsonEncode({'status': status}),
@@ -724,7 +749,7 @@ class ApiService {
 
   static Future<List<dynamic>> getRoleRequests() async {
     final response = await _send(
-      () => http.get(uri('/api/role-requests'), headers: _headers),
+      () => _client.get(uri('/api/role-requests'), headers: _headers),
     );
 
     if (response.statusCode == 200) {
@@ -739,7 +764,7 @@ class ApiService {
     String action,
   ) async {
     final response = await _send(
-      () => http.put(
+      () => _client.put(
         uri('/api/role-requests/$targetUserId'),
         headers: _headers,
         body: jsonEncode({'action': action}),
@@ -756,14 +781,18 @@ class ApiService {
   static Future<List<dynamic>> getAnnouncements() async {
     try {
       final response = await _send(
-        () => http.get(uri('/api/announcements'), headers: _headers),
+        () => _client.get(uri('/api/announcements'), headers: _headers),
       );
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
 
         if (decoded is List) {
-          unawaited(LocalDatabaseService.instance.cacheAnnouncements(decoded));
+          if (!useLocalBackend) {
+            unawaited(
+              LocalDatabaseService.instance.cacheAnnouncements(decoded),
+            );
+          }
 
           return decoded;
         }
@@ -795,7 +824,7 @@ class ApiService {
 
   static Future<List<dynamic>> getEventAnnouncements(int eventId) async {
     final response = await _send(
-      () => http.get(
+      () => _client.get(
         uri('/api/events/$eventId/announcements'),
         headers: _headers,
       ),
@@ -821,7 +850,7 @@ class ApiService {
     required String message,
   }) async {
     final response = await _send(
-      () => http.post(
+      () => _client.post(
         uri('/api/announcements'),
         headers: _headers,
         body: jsonEncode({
@@ -845,7 +874,7 @@ class ApiService {
     required String message,
   }) async {
     final response = await _send(
-      () => http.post(
+      () => _client.post(
         uri('/api/help-requests'),
         headers: _headers,
         body: jsonEncode({
@@ -867,7 +896,7 @@ class ApiService {
     final query = status == null ? '' : '?status=$status';
 
     final response = await _send(
-      () => http.get(uri('/api/help-requests$query'), headers: _headers),
+      () => _client.get(uri('/api/help-requests$query'), headers: _headers),
     );
 
     if (response.statusCode == 200) {
@@ -889,7 +918,7 @@ class ApiService {
     String status,
   ) async {
     final response = await _send(
-      () => http.put(
+      () => _client.put(
         uri('/api/help-requests/$requestId/status'),
         headers: _headers,
         body: jsonEncode({'status': status}),
